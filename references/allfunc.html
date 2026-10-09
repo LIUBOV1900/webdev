@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Классификация функций проекта</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #eef4ff, #f8fbff);
+      color: #17203a;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(20, 35, 80, 0.10);
+      padding: 26px;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
+      line-height: 1.2;
+    }
+
+    .note {
+      color: #5b657c;
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .filter-btn {
+      border: 1px solid #ccd7ff;
+      background: #ffffff;
+      color: #24345f;
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.92rem;
+    }
+
+    .filter-btn:hover {
+      background: #f5f8ff;
+    }
+
+    .filter-btn.active {
+      background: #3d5afe;
+      color: #ffffff;
+      border-color: #3d5afe;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid #d9e2ff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1000px;
+      background: #ffffff;
+    }
+
+    th,
+    td {
+      border: 1px solid #d9e2ff;
+      padding: 12px;
+      vertical-align: top;
+      text-align: left;
+      line-height: 1.45;
+    }
+
+    th {
+      background: #edf2ff;
+      color: #24345f;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fafcff;
+    }
+
+    code {
+      background: #f2f5ff;
+      border: 1px solid #dbe4ff;
+      padding: 2px 6px;
+      border-radius: 7px;
+      white-space: nowrap;
+      font-size: 0.95em;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      white-space: nowrap;
+      font-weight: bold;
+    }
+
+    .db-core {
+      background: #e3f2fd;
+      color: #0d47a1;
+    }
+
+    .db-data {
+      background: #e0f2f1;
+      color: #004d40;
+    }
+
+    .db-read {
+      background: #ede7f6;
+      color: #311b92;
+    }
+
+    .db-debug {
+      background: #eceff1;
+      color: #37474f;
+    }
+
+    .session {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .route {
+      background: #ffebee;
+      color: #b71c1c;
+    }
+
+    .view {
+      background: #e8f5e9;
+      color: #1b5e20;
+    }
+
+    .answer {
+      background: #fce4ec;
+      color: #880e4f;
+    }
+
+    .small {
+      font-size: 0.92rem;
+      color: #5b657c;
+    }
+
+    @media (max-width: 700px) {
+      body {
+        padding: 12px 8px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Классификация функций проекта</h1>
+
+      <p class="note">
+        В таблице функции распределены по ролям: работа с базой данных, состояние пользователя,
+        маршрутизация, представление и обработка ответов. Некоторые функции могут выполнять сразу несколько ролей,
+        например <code>result()</code> является маршрутной функцией и при этом рендерит страницу результата.
+      </p>
+
+      <div class="toolbar">
+        <button class="filter-btn active" data-filter="all" onclick="filterRows('all')">Все (22)</button>
+        <button class="filter-btn" data-filter="db-core" onclick="filterRows('db-core')">БД: подключение и запросы (3)</button>
+        <button class="filter-btn" data-filter="db-data" onclick="filterRows('db-data')">БД: структура и данные (5)</button>
+        <button class="filter-btn" data-filter="db-read" onclick="filterRows('db-read')">БД: чтение и логика (3)</button>
+        <button class="filter-btn" data-filter="db-debug" onclick="filterRows('db-debug')">БД: отладка и демо (3)</button>
+        <button class="filter-btn" data-filter="session" onclick="filterRows('session')">Сессия и состояние (2)</button>
+        <button class="filter-btn" data-filter="route" onclick="filterRows('route')">Маршруты / контроллеры (3)</button>
+        <button class="filter-btn" data-filter="view" onclick="filterRows('view')">Представление / рендеринг (2)</button>
+        <button class="filter-btn" data-filter="answer" onclick="filterRows('answer')">Обработка ответа (1)</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="funcs">
+          <thead>
+            <tr>
+              <th>Категория</th>
+              <th>Функция</th>
+              <th>Назначение</th>
+              <th>Где используется / кто вызывает</th>
+              <th>Что возвращает / результат</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr data-cat="db-core">
+              <td><span class="badge db-core">БД: подключение и запросы</span></td>
+              <td><code>open()</code></td>
+              <td>Открывает соединение с базой данных SQLite и создаёт курсор.</td>
+              <td>Вызывается внутри функций модуля базы данных перед выполнением запросов.</td>
+              <td>Не возвращает значение; заполняет глобальные переменные <code>conn</code> и <code>cursor</code>.</td>
+            </tr>
+
+            <tr data-cat="db-core">
+              <td><span class="badge db-core">БД: подключение и запросы</span></td>
+              <td><code>close()</code></td>
+              <td>Закрывает курсор и соединение с базой данных.</td>
+              <td>Вызывается после завершения работы с базой в функциях модуля базы данных.</td>
+              <td>Не возвращает значение; закрывает соединение.</td>
+            </tr>
+
+            <tr data-cat="db-core">
+              <td><span class="badge db-core">БД: подключение и запросы</span></td>
+              <td><code>do(query)</code></td>
+              <td>Выполняет SQL-запрос и сохраняет изменения в базе.</td>
+              <td>Используется в <code>clear_db()</code> и <code>create()</code>.</td>
+              <td>Не возвращает значение; вызывает <code>conn.commit()</code>.</td>
+            </tr>
+
+            <tr data-cat="db-data">
+              <td><span class="badge db-data">БД: структура и данные</span></td>
+              <td><code>clear_db()</code></td>
+              <td>Удаляет таблицы <code>quiz_content</code>, <code>question</code>, <code>quiz</code>.</td>
+              <td>Вызывается для очистки структуры базы перед повторным созданием таблиц.</td>
+              <td>Не возвращает значение; удаляет таблицы.</td>
+            </tr>
+
+            <tr data-cat="db-data">
+              <td><span class="badge db-data">БД: структура и данные</span></td>
+              <td><code>create()</code></td>
+              <td>Создаёт таблицы <code>quiz</code>, <code>question</code>, <code>quiz_content</code>.</td>
+              <td>Вызывается для первичной инициализации структуры базы данных.</td>
+              <td>Не возвращает значение; создаёт таблицы, если их ещё нет.</td>
+            </tr>
+
+            <tr data-cat="db-data">
+              <td><span class="badge db-data">БД: структура и данные</span></td>
+              <td><code>add_questions()</code></td>
+              <td>Добавляет подготовленные вопросы в таблицу <code>question</code>.</td>
+              <td>Вызывается для наполнения базы данных вопросами.</td>
+              <td>Не возвращает значение; добавляет записи в таблицу.</td>
+            </tr>
+
+            <tr data-cat="db-data">
+              <td><span class="badge db-data">БД: структура и данные</span></td>
+              <td><code>add_quiz()</code></td>
+              <td>Добавляет подготовленные викторины в таблицу <code>quiz</code>.</td>
+              <td>Вызывается для наполнения базы данных викторинами.</td>
+              <td>Не возвращает значение; добавляет записи в таблицу.</td>
+            </tr>
+
+            <tr data-cat="db-data">
+              <td><span class="badge db-data">БД: структура и данные</span></td>
+              <td><code>add_links()</code></td>
+              <td>Добавляет связи между викторинами и вопросами в таблицу <code>quiz_content</code>.</td>
+              <td>Вызывается вручную для связывания викторин с вопросами.</td>
+              <td>Не возвращает значение; добавляет связи в таблицу.</td>
+            </tr>
+
+            <tr data-cat="db-read">
+              <td><span class="badge db-read">БД: чтение и логика</span></td>
+              <td><code>get_quises()</code></td>
+              <td>Получает список всех викторин из таблицы <code>quiz</code>.</td>
+              <td>Используется в <code>quiz_form()</code> для формирования списка викторин.</td>
+              <td>Возвращает список кортежей, например <code>(id, name)</code>.</td>
+            </tr>
+
+            <tr data-cat="db-read">
+              <td><span class="badge db-read">БД: чтение и логика</span></td>
+              <td><code>get_question_after(question_id, quiz_id)</code></td>
+              <td>Получает следующий вопрос викторины после вопроса с указанным id.</td>
+              <td>Используется в <code>main()</code> и <code>test()</code>.</td>
+              <td>Возвращает кортеж с данными вопроса или <code>None</code>, если вопросов больше нет.</td>
+            </tr>
+
+            <tr data-cat="db-read">
+              <td><span class="badge db-read">БД: чтение и логика</span></td>
+              <td><code>check_answer(q_id, ans_text)</code></td>
+              <td>Проверяет, совпадает ли ответ пользователя с правильным ответом.</td>
+              <td>Используется в <code>save_answers()</code>.</td>
+              <td>Возвращает <code>True</code>, если ответ верный, иначе <code>False</code>.</td>
+            </tr>
+
+            <tr data-cat="db-debug">
+              <td><span class="badge db-debug">БД: отладка и демо</span></td>
+              <td><code>show(table)</code></td>
+              <td>Выводит все строки указанной таблицы в консоль.</td>
+              <td>Используется в <code>show_tables()</code>.</td>
+              <td>Не возвращает значение; печатает результат запроса.</td>
+            </tr>
+
+            <tr data-cat="db-debug">
+              <td><span class="badge db-debug">БД: отладка и демо</span></td>
+              <td><code>show_tables()</code></td>
+              <td>Выводит содержимое таблиц <code>question</code>, <code>quiz</code>, <code>quiz_content</code>.</td>
+              <td>Вызывается для отладки и просмотра содержимого базы.</td>
+              <td>Не возвращает значение; печатает данные в консоль.</td>
+            </tr>
+
+            <tr data-cat="db-debug">
+              <td><span class="badge db-debug">БД: отладка и демо</span></td>
+              <td><code>main()</code></td>
+              <td>Демонстрирует работу модуля базы данных, например выводит вопрос.</td>
+              <td>Точка запуска скрипта базы данных.</td>
+              <td>Не возвращает значение; выводит данные в консоль.</td>
+            </tr>
+
+            <tr data-cat="session">
+              <td><span class="badge session">Сессия и состояние</span></td>
+              <td><code>start_quiz(quiz_id)</code></td>
+              <td>Инициализирует состояние викторины в сессии пользователя.</td>
+              <td>Вызывается в <code>index()</code> при выборе викторины.</td>
+              <td>Не возвращает значение; записывает данные в <code>session</code>.</td>
+            </tr>
+
+            <tr data-cat="session">
+              <td><span class="badge session">Сессия и состояние</span></td>
+              <td><code>end_quiz()</code></td>
+              <td>Очищает состояние викторины после завершения тура.</td>
+              <td>Вызывается в <code>result()</code>.</td>
+              <td>Не возвращает значение; очищает <code>session</code>.</td>
+            </tr>
+
+            <tr data-cat="route">
+              <td><span class="badge route">Маршруты / контроллеры</span></td>
+              <td><code>index()</code></td>
+              <td>Обрабатывает главную страницу: показывает выбор викторины или принимает выбранный вариант.</td>
+              <td>Правило маршрута <code>/</code>, методы GET и POST.</td>
+              <td>Возвращает HTML-форму выбора викторины или перенаправление на <code>test()</code>.</td>
+            </tr>
+
+            <tr data-cat="route">
+              <td><span class="badge route">Маршруты / контроллеры</span></td>
+              <td><code>test()</code></td>
+              <td>Обрабатывает страницу текущего вопроса: показывает вопрос, принимает ответ, завершает тур при отсутствии вопросов.</td>
+              <td>Правило маршрута <code>/test</code>, методы GET и POST.</td>
+              <td>Возвращает HTML-страницу вопроса или перенаправление на <code>result()</code> / <code>index()</code>.</td>
+            </tr>
+
+            <tr data-cat="route">
+              <td><span class="badge route">Маршруты / контроллеры</span></td>
+              <td><code>result()</code></td>
+              <td>Показывает результат тура и завершает викторину.</td>
+              <td>Правило маршрута <code>/result</code>.</td>
+              <td>Возвращает HTML-страницу результата; вызывает <code>end_quiz()</code>.</td>
+            </tr>
+
+            <tr data-cat="view">
+              <td><span class="badge view">Представление / рендеринг</span></td>
+              <td><code>quiz_form()</code></td>
+              <td>Готовит страницу выбора викторины, передавая список викторин в шаблон.</td>
+              <td>Вызывается из <code>index()</code> при GET-запросе.</td>
+              <td>Возвращает результат <code>render_template('start.html')</code>.</td>
+            </tr>
+
+            <tr data-cat="view">
+              <td><span class="badge view">Представление / рендеринг</span></td>
+              <td><code>question_form(question)</code></td>
+              <td>Готовит страницу вопроса, перемешивает варианты ответов и передаёт их в шаблон.</td>
+              <td>Вызывается из <code>test()</code>, если есть следующий вопрос.</td>
+              <td>Возвращает результат <code>render_template('test.html')</code>.</td>
+            </tr>
+
+            <tr data-cat="answer">
+              <td><span class="badge answer">Обработка ответа</span></td>
+              <td><code>save_answers()</code></td>
+              <td>Читает ответ пользователя из формы, проверяет его и обновляет счётчики в сессии.</td>
+              <td>Вызывается из <code>test()</code> при POST-запросе.</td>
+              <td>Не возвращает значение; изменяет данные в <code>session</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="note small">
+        Условные обозначения: БД — база данных. Маршруты / контроллеры — функции, которые привязаны к URL и обрабатывают запросы.
+        Представление / рендеринг — функции, которые подготавливают HTML-страницы через шаблоны.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    function filterRows(cat) {
+      const rows = document.querySelectorAll('#funcs tbody tr[data-cat]');
+
+      rows.forEach(row => {
+        if (cat === 'all' || row.dataset.cat === cat) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === cat);
+      });
+    }
+  </script>
+</body>
+</html>
