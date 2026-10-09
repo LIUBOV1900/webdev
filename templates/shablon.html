@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шаблоны — М5·У7</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dur:.7s;
+    --bg1:#101228; --bg2:#251a4a;
+    --paper:#fffdf7; --paper2:#f6efe1;
+    --ink:#1d1f38; --ink-soft:#4c4f6a;
+    --accent:#ff5a4e; --accent2:#14b8a6; --blue:#4361ee; --yellow:#ffcd42;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Manrope',system-ui,sans-serif;background:linear-gradient(160deg,var(--bg2),var(--bg1) 70%);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:20px}
+
+  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+  .bg::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1.2px,transparent 1.2px);background-size:28px 28px}
+  .blob{position:absolute;border-radius:50%;filter:blur(85px);opacity:.5}
+  .b1{width:520px;height:520px;background:#ff5a4e;top:-160px;left:-140px;animation:drift 16s ease-in-out infinite alternate}
+  .b2{width:640px;height:640px;background:#4361ee;bottom:-220px;right:-160px;animation:drift 21s ease-in-out infinite alternate-reverse}
+  .b3{width:420px;height:420px;background:#14b8a6;top:42%;left:56%;opacity:.3;animation:drift 14s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate(70px,45px) scale(1.12)}}
+
+  .topbar{width:min(1000px,95vw);display:flex;align-items:center;gap:16px;margin-bottom:14px}
+  .brand{font-family:'Unbounded';font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:#fff;white-space:nowrap;text-shadow:0 2px 14px rgba(255,90,78,.45)}
+  .progress{flex:1;height:6px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--yellow),var(--accent2));border-radius:99px;transition:width .4s ease}
+  .counter{font-variant-numeric:tabular-nums;font-size:14px;font-weight:700;min-width:60px;text-align:right;color:#fff}
+
+  .book{width:min(1000px,95vw);height:min(680px,calc(100vh - 180px));position:relative;perspective:1800px}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;
+    background:
+      radial-gradient(460px 280px at 108% -10%, rgba(67,97,238,.14), transparent 62%),
+      radial-gradient(420px 260px at -8% 110%, rgba(255,90,78,.12), transparent 62%),
+      linear-gradient(105deg,var(--paper2) 0%,var(--paper) 12%,var(--paper) 100%);
+    border-radius:6px 20px 20px 6px;
+    box-shadow:0 34px 70px -20px rgba(0,0,0,.6),0 2px 0 rgba(255,255,255,.5) inset;
+    transform-origin:left center;backface-visibility:hidden;
+    transition:transform var(--dur) cubic-bezier(.5,.05,.28,.99);overflow:hidden;
+    padding:clamp(24px,4.2vw,50px) clamp(24px,4.8vw,58px)}
+  .slide::before{content:"";position:absolute;left:0;top:0;bottom:0;width:26px;
+    background:linear-gradient(90deg,rgba(0,0,0,.20),rgba(0,0,0,.05) 55%,rgba(0,0,0,0));pointer-events:none}
+  .pagenum{position:absolute;bottom:14px;right:24px;font-size:13px;color:var(--ink-soft);font-weight:700}
+
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  .slide .content>*,.cover>*:not(.chip){animation:rise .55s cubic-bezier(.2,.7,.3,1) both}
+  .slide .content>*:nth-child(1),.cover>*:nth-child(1){animation-delay:.08s}
+  .slide .content>*:nth-child(2),.cover>*:nth-child(2){animation-delay:.16s}
+  .slide .content>*:nth-child(3),.cover>*:nth-child(3){animation-delay:.24s}
+  .slide .content>*:nth-child(4),.cover>*:nth-child(4){animation-delay:.32s}
+  .slide .content>*:nth-child(5),.cover>*:nth-child(5){animation-delay:.40s}
+  .slide .content>*:nth-child(6),.cover>*:nth-child(6){animation-delay:.48s}
+
+  .eyebrow{font-family:'Unbounded';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:28px;height:3px;background:linear-gradient(90deg,var(--accent),var(--yellow));border-radius:3px}
+  h1{font-family:'Unbounded';font-weight:900;line-height:1.04}
+  h2{font-family:'Unbounded';font-weight:700;font-size:clamp(23px,3.4vw,36px);line-height:1.12;margin-bottom:clamp(12px,2.2vh,22px)}
+  p.lead{font-size:clamp(16.5px,2.15vw,21px);line-height:1.55;color:var(--ink-soft);max-width:64ch;font-weight:500}
+  p.lead b{color:var(--ink)}
+  .content{flex:1;display:flex;flex-direction:column;min-height:0}
+
+  .hl{background:linear-gradient(transparent 56%,rgba(255,205,66,.9) 56%);padding:0 3px;border-radius:2px;color:var(--ink)}
+  .hl-t{background:linear-gradient(transparent 56%,rgba(20,184,166,.45) 56%);padding:0 3px;color:var(--ink)}
+  .hl-b{background:linear-gradient(transparent 56%,rgba(67,97,238,.35) 56%);padding:0 3px;color:var(--ink)}
+
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  .card{background:#fff;border:1.5px solid #eee3d4;border-radius:18px;padding:16px 18px;
+    box-shadow:0 10px 26px -16px rgba(29,31,56,.4);transition:transform .25s}
+  .card:hover{transform:translateY(-3px)}
+  .card h3{font-size:clamp(16px,2vw,19px);font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:9px}
+  .card p{font-size:clamp(14.5px,1.85vw,17.5px);line-height:1.5;color:var(--ink-soft);font-weight:500}
+  .card p b{color:var(--ink)}
+  .tint-b{background:linear-gradient(135deg,#eef1ff,#fff 65%);border-color:#dbe4ff}
+  .tint-a{background:linear-gradient(135deg,#fff0ee,#fff 65%);border-color:#ffdfdb}
+  .tint-t{background:linear-gradient(135deg,#e7faf6,#fff 65%);border-color:#c9f1e9}
+
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:11px}
+  ul.clean li{position:relative;padding-left:30px;font-size:clamp(15.5px,2vw,19px);line-height:1.5;color:var(--ink);font-weight:600}
+  ul.clean li::before{content:"";position:absolute;left:0;top:9px;width:11px;height:11px;border-radius:4px;background:linear-gradient(135deg,var(--accent),var(--yellow));transform:rotate(45deg)}
+  ul.clean li b{color:var(--blue)}
+  ul.clean li code{font-family:'JetBrains Mono',Consolas,monospace;font-size:.9em;background:#f3ead8;color:#c03a2b;padding:1px 6px;border-radius:6px}
+
+  pre.code{background:#191c30;color:#eef0ff;border-radius:14px;padding:15px 20px;
+    font-family:'JetBrains Mono',Consolas,monospace;font-size:clamp(12px,1.65vw,15px);line-height:1.62;overflow:auto;
+    border:1px solid #2c3050;box-shadow:0 12px 28px -16px rgba(0,0,0,.5)}
+  pre.code .kw{color:#c792ea;font-weight:700}
+  pre.code .fn{color:#82aaff;font-weight:700}
+  pre.code .str{color:#a5d6a7}
+  pre.code .num{color:#f78c6c}
+  pre.code .cmt{color:#8a8fb5;font-style:italic}
+  pre.code .tag{color:#7ee0d2;font-weight:700}
+  pre.code .attr{color:#ffb86b}
+  pre.code .j2{color:#ffd166;font-weight:700}
+  code.inline{background:#f3ead8;color:#c03a2b;padding:2px 8px;border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:.9em;font-weight:700}
+
+  .cover{justify-content:center}
+  .cover .kicker{font-family:'Unbounded';font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:20px;font-weight:700}
+  .cover h1{font-size:clamp(30px,5.4vw,58px);margin-bottom:22px}
+  .cover h1 em{font-style:normal;background:linear-gradient(92deg,var(--accent),#ff9f2e);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cover .tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .pill{font-size:14px;font-weight:800;padding:9px 16px;border-radius:99px;background:#fff;border:1.5px solid #eadfc9;color:var(--ink);box-shadow:0 6px 16px -10px rgba(29,31,56,.4)}
+  .pill.a{background:linear-gradient(92deg,var(--accent),#ff8a3a);color:#fff;border-color:transparent}
+  .pill.b{background:linear-gradient(92deg,var(--blue),#7aa5ff);color:#fff;border-color:transparent}
+  .pill.t{background:linear-gradient(92deg,var(--accent2),#5eead4);color:#06332e;border-color:transparent}
+  .pill.done{opacity:.55;text-decoration:line-through}
+  .chip{position:absolute;display:grid;place-items:center;width:66px;height:66px;border-radius:20px;background:#fff;
+    box-shadow:0 16px 34px -14px rgba(29,31,56,.5);font-size:30px;animation:bob 6s ease-in-out infinite}
+  .chip.c1{top:13%;right:10%;transform:rotate(9deg)}
+  .chip.c2{bottom:16%;right:24%;animation-delay:1.2s;background:linear-gradient(135deg,var(--accent),#ff9f2e);color:#fff;font-family:'Unbounded';font-size:17px;font-weight:900}
+  .chip.c3{top:24%;right:31%;animation-delay:.6s;background:linear-gradient(135deg,var(--blue),#7aa5ff)}
+  @keyframes bob{50%{translate:0 -14px}}
+
+  .kv{display:flex;gap:14px;align-items:baseline;background:#fff;border-left:5px solid var(--accent2);border-radius:12px;padding:10px 18px;margin-bottom:10px;box-shadow:0 8px 20px -14px rgba(29,31,56,.4)}
+  .kv code{font-family:'JetBrains Mono',monospace;font-weight:700;color:#0f766e;font-size:clamp(12.5px,1.6vw,15px);min-width:340px;flex:none}
+  .kv span{font-size:clamp(14px,1.8vw,17px);color:var(--ink-soft);font-weight:600}
+  .kv span b{color:var(--ink)}
+
+  /* схема взаимодействия */
+  .flow{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:0;padding:8px 0}
+  .node{background:#fff;border:2.5px solid var(--blue);border-radius:18px;padding:13px 14px;text-align:center;
+    display:flex;flex-direction:column;gap:3px;align-items:center;box-shadow:0 14px 30px -16px rgba(67,97,238,.55)}
+  .node .ico{font-size:30px;line-height:1}
+  .node .t{font-weight:800;font-size:clamp(12.5px,1.6vw,15.5px)}
+  .node .s{font-size:11.5px;color:var(--ink-soft);line-height:1.3;font-weight:700}
+  .node.app{border-color:var(--accent);box-shadow:0 14px 30px -16px rgba(255,90,78,.55)}
+  .node.db{border-color:var(--accent2);box-shadow:0 14px 30px -16px rgba(20,184,166,.55)}
+  .exchange{flex:1;display:flex;flex-direction:column;gap:30px;padding:0 2px;min-width:64px;max-width:160px}
+  .arr{position:relative;height:3px;border-radius:2px}
+  .arr span{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;white-space:nowrap;top:-20px;color:var(--blue)}
+  .arr.right{background:var(--blue)}
+  .arr.right::after{content:"";position:absolute;right:-2px;top:50%;translate:0 -50%;
+    border-left:9px solid var(--blue);border-top:5.5px solid transparent;border-bottom:5.5px solid transparent}
+  .arr.left{background:var(--accent)}
+  .arr.left span{top:auto;bottom:-20px;color:var(--accent)}
+  .arr.left::before{content:"";position:absolute;left:-2px;top:50%;translate:0 -50%;
+    border-right:9px solid var(--accent);border-top:5.5px solid transparent;border-bottom:5.5px solid transparent}
+
+  /* шпаргалка */
+  .taggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+  .tg{background:#fff;border:1.5px solid #eee3d4;border-radius:13px;padding:11px 14px;display:flex;flex-direction:column;gap:3px}
+  .tg code{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--blue);font-size:14px}
+  .tg span{font-size:13px;color:var(--ink-soft);line-height:1.4;font-weight:600}
+  .freq{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;width:max-content;margin-top:4px}
+  .freq.hot{background:#ffe8d6;color:#c2410c}
+  .freq.mid{background:#e0e7ff;color:#3730a3}
+
+  .finale .big{font-family:'Unbounded';font-weight:900;font-size:clamp(24px,3.8vw,42px);line-height:1.12;margin-bottom:16px}
+  .finale .big span{background:linear-gradient(92deg,var(--accent2),#5eead4);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .nav{width:min(1000px,95vw);display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+  .btn{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+    background:linear-gradient(92deg,var(--accent),#ff8a3a);border:none;color:#fff;
+    padding:13px 24px;border-radius:99px;font-family:'Manrope';font-weight:800;font-size:15px;
+    box-shadow:0 12px 26px -12px rgba(255,90,78,.7);transition:.2s}
+  .btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 16px 32px -12px rgba(255,90,78,.85)}
+  .btn:disabled{opacity:.3;cursor:default;box-shadow:none}
+  .hint{color:#aab0d8;font-size:13px;font-weight:600}
+  @media(max-width:720px){
+    .hint{display:none}.g2{grid-template-columns:1fr}
+    .chip{display:none}.kv{flex-direction:column;gap:4px}.kv code{min-width:0}
+    .node .s{display:none}.arr span{font-size:8.5px}.exchange{min-width:40px;gap:22px}
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <div class="topbar">
+    <span class="brand">М5·У7 · Шаблоны</span>
+    <div class="progress"><i id="bar"></i></div>
+    <span class="counter" id="counter">1 / 20</span>
+  </div>
+
+  <div class="book" id="book">
+
+    <!-- 1. Титул -->
+    <section class="slide cover">
+      <span class="chip c1">🧩</span><span class="chip c2">{% %}</span><span class="chip c3">✨</span>
+      <div class="kicker">Модуль 5 · Урок 7</div>
+      <h1>Шаблоны:<br><em>отделяем оформление от данных</em></h1>
+      <p class="lead" style="margin-bottom:26px">Как собирать HTML-страницы для викторины легко и без ошибок: функция <code class="inline">render_template</code>, подстановки <code class="inline">{{ }}</code> и операторы <code class="inline">{% %}</code>.</p>
+      <div class="tags">
+        <span class="pill a">Flask</span>
+        <span class="pill t">Jinja-шаблоны</span>
+        <span class="pill b">{{ }} · {% %}</span>
+      </div>
+      <span class="pagenum">01</span>
+    </section>
+
+    <!-- 2. Повторение: схема -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Повторение</div>
+        <h2>Как работает наша веб-викторина?</h2>
+        <div class="flow">
+          <div class="node"><span class="ico">💻</span><span class="t">Браузер</span><span class="s">клиент</span></div>
+          <div class="exchange">
+            <div class="arr right"><span>HTTP-запрос</span></div>
+            <div class="arr left"><span>HTML-документ</span></div>
+          </div>
+          <div class="node"><span class="ico">🌐</span><span class="t">Веб-сервер</span><span class="s">Flask</span></div>
+          <div class="exchange">
+            <div class="arr right"><span>обработка</span></div>
+            <div class="arr left"><span>страница</span></div>
+          </div>
+          <div class="node app"><span class="ico">⚙️</span><span class="t">Веб-приложение</span><span class="s">Flask</span></div>
+          <div class="exchange">
+            <div class="arr right"><span>SQL-запрос</span></div>
+            <div class="arr left"><span>данные</span></div>
+          </div>
+          <div class="node db"><span class="ico">🗄️</span><span class="t">База данных</span><span class="s">SQLite</span></div>
+        </div>
+        <p class="lead" style="text-align:center">Веб-приложение взаимодействует с другими программами по определённым стандартам.</p>
+      </div>
+      <span class="pagenum">02</span>
+    </section>
+
+    <!-- 3. Повторение: команды -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Повторение</div>
+        <h2>Что мы уже умеем во Flask</h2>
+        <div class="kv"><code>app = Flask(__name__); app.run()</code><span>запуск приложения — <b>веб-сервер работает</b>, пока программа не остановлена</span></div>
+        <div class="kv"><code>app.add_url_rule('/', 'index', index)</code><span>регистрация <b>адреса (URL)</b> и функции для него</span></div>
+        <div class="kv"><code>request.form.get('quiz')</code><span>получение данных из <b>формы</b> (метод POST)</span></div>
+        <div class="kv"><code>session['quiz'] = 1</code><span><b>сессия</b> — пары «ключ-значение» об активности пользователя</span></div>
+        <p class="lead" style="margin-top:10px">А также <b>SQL</b>: <code class="inline">CREATE TABLE</code>, <code class="inline">INSERT</code>, <code class="inline">SELECT</code>.</p>
+      </div>
+      <span class="pagenum">03</span>
+    </section>
+
+    <!-- 4. Статика и идея -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Повторение</div>
+        <h2>Что ещё использует Flask?</h2>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-b"><h3>📁 Статические ресурсы</h3><p>Flask может использовать <b>статические</b> ресурсы: картинки, готовые HTML-страницы, таблицы стилей. Так работает <b>статический сайт</b>.</p></div>
+          <div class="card tint-t"><h3>💡 Идея</h3><p>Можно положить на диск не только готовые страницы, но и <b>шаблоны</b> для создания страниц!</p></div>
+        </div>
+        <p class="lead" style="margin-top:14px"><b class="hl">Сегодня научимся работать с шаблонами.</b></p>
+      </div>
+      <span class="pagenum">04</span>
+    </section>
+
+    <!-- 5. Подход от данных к тегам -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Обсуждение</div>
+        <h2>Подход «от данных к тегам»</h2>
+        <p class="lead" style="margin-bottom:12px">Раньше мы создавали HTML-код <b>вокруг полученных данных</b>, оборачивая данные тегами — собирали страницу из строк:</p>
+        <pre class="code">page = <span class="str">'''&lt;html&gt;&lt;body&gt;'''</span>
+page += <span class="str">'''&lt;h2&gt;Выберите викторину&lt;/h2&gt;'''</span>
+page += <span class="str">'''&lt;form method="post" action="/"&gt;'''</span>
+page += <span class="str">'''&lt;select name="quiz"&gt;'''</span>
+page += <span class="str">'''&lt;option value="'''</span> + <span class="fn">str</span>(id) + <span class="str">'''"&gt;'''</span> + <span class="fn">str</span>(name) + <span class="str">'''&lt;/option&gt;'''</span>
+<span class="cmt"># …и так для каждого тега!</span></pre>
+        <p class="lead" style="margin-top:12px"><b class="hl-b">Удобно ли так работать?</b></p>
+      </div>
+      <span class="pagenum">05</span>
+    </section>
+
+    <!-- 6. Недостатки -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Обсуждение</div>
+        <h2>Недостатки такого подхода</h2>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-a"><h3>😓 Сложно менять код</h3><p>Каждое изменение оформления — правки прямо в программе.</p></div>
+          <div class="card tint-a"><h3>🎨 Нет единого стиля</h3><p>Сложно поддерживать одинаковое оформление разных страниц.</p></div>
+          <div class="card tint-a"><h3>👥 Не разделить работу</h3><p>Дизайнер и backend-разработчик мешают друг другу.</p></div>
+          <div class="card tint-a"><h3>🐛 Ошибки в тегах</h3><p>Сложно собрать без ошибок длинный HTML-код из строк.</p></div>
+        </div>
+        <p class="lead" style="margin-top:12px">Выход — <span class="hl">шаблоны</span>!</p>
+      </div>
+      <span class="pagenum">06</span>
+    </section>
+
+    <!-- 7. Что такое шаблон -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Что такое шаблон?</h2>
+        <ul class="clean" style="margin-bottom:16px">
+          <li>Шаблон содержит <b>всю информацию о внешнем виде</b> страницы.</li>
+          <li>Шаблон <b>не содержит конкретных данных</b>.</li>
+          <li>В шаблоне указано, <b>куда какие данные</b> нужно вставлять.</li>
+        </ul>
+        <div class="card tint-t">
+          <h3>📄 Шаблон — документ, оформленный по правилам HTML</h3>
+          <p>Мы создаём структуру из тегов, в которую потом вписываем нужные данные. Программа состоит из изолированных частей: <span class="pill a" style="padding:4px 12px;font-size:13px">теги</span> + <span class="pill b" style="padding:4px 12px;font-size:13px">данные</span>.</p>
+        </div>
+      </div>
+      <span class="pagenum">07</span>
+    </section>
+
+    <!-- 8. Преимущества -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Преимущества шаблонов</h2>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-t"><h3>✏️ Легко менять</h3><p>Внесение изменений в оформление — правка одного файла-шаблона.</p></div>
+          <div class="card tint-t"><h3>🎯 Единый стиль</h3><p>Не нужно каждый раз заново писать код, чтобы оформить разные страницы одинаково.</p></div>
+          <div class="card tint-t"><h3>🤝 Командная работа</h3><p>Над изолированными частями могут работать разные специалисты: дизайнер и программист.</p></div>
+          <div class="card tint-t"><h3>✅ Меньше ошибок</h3><p>HTML-код удобно собирать: теги и данные не перемешаны.</p></div>
+        </div>
+      </div>
+      <span class="pagenum">08</span>
+    </section>
+
+    <!-- 9. render_template -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема · Обработка шаблонов</div>
+        <h2>Подключаем шаблон: render_template</h2>
+        <pre class="code" style="margin-bottom:14px"><span class="kw">from</span> flask <span class="kw">import</span> Flask, <span class="fn">render_template</span>
+
+<span class="kw">def</span> <span class="fn">index</span>():
+    <span class="str">""" функция обрабатывает шаблон index.html
+        и возвращает получившийся документ """</span>
+    <span class="kw">return</span> <span class="fn">render_template</span>(<span class="str">'index.html'</span>)</pre>
+        <p class="lead"><code class="inline">render_template</code> обрабатывает шаблон и возвращает получившийся текст — готовый HTML-документ.</p>
+      </div>
+      <span class="pagenum">09</span>
+    </section>
+
+    <!-- 10. Папки -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Расположение файлов на диске</div>
+        <h2>Где искать шаблоны и ресурсы?</h2>
+        <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:18px;flex:1;align-items:start">
+          <pre class="code"><span class="kw">import</span> os
+
+folder = os.<span class="fn">getcwd</span>()  <span class="cmt"># рабочая папка</span>
+
+app = <span class="fn">Flask</span>(__name__,
+    template_folder=folder, <span class="cmt"># шаблоны</span>
+    static_folder=folder)   <span class="cmt"># ресурсы</span></pre>
+          <ul class="clean">
+            <li><b>static_folder</b> — папка с ресурсами: картинки, готовые страницы, таблицы стилей;</li>
+            <li><b>template_folder</b> — папка с шаблонами;</li>
+            <li>по умолчанию Flask ищет ресурсы в подпапке <code>static</code>, шаблоны — в подпапке <code>templates</code>.</li>
+          </ul>
+        </div>
+      </div>
+      <span class="pagenum">10</span>
+    </section>
+
+    <!-- 11. Передача параметров -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Функция обработки шаблонов</div>
+        <h2>Передаём данные в шаблон</h2>
+        <pre class="code" style="margin-bottom:14px"><span class="fn">render_template</span>(<span class="str">'index1.html'</span>,
+    header=<span class="str">"А если попробовать"</span>,
+    text=<span class="str">"&lt;i&gt;Курсив?&lt;/i&gt;"</span>)</pre>
+        <ul class="clean">
+          <li><b>имя шаблона</b> — строка с именем файла (из папки <code>template_folder</code>);</li>
+          <li><b>поименованные параметры</b> — их значения будут использованы в шаблоне;</li>
+          <li>передать можно <b>любые объекты</b>: строки, переменные, списки, словари, функции.</li>
+        </ul>
+      </div>
+      <span class="pagenum">11</span>
+    </section>
+
+    <!-- 12. {{ }} -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Процесс обработки шаблона</div>
+        <h2>Подстановка значений: {{ выражение }}</h2>
+        <div style="display:grid;grid-template-columns:1fr 1.1fr;gap:18px;flex:1;align-items:start">
+          <pre class="code"><span class="cmt">&lt;!-- index.html --&gt;</span>
+&lt;<span class="tag">body</span>&gt;
+  &lt;<span class="tag">h2</span>&gt;<span class="j2">{{ header }}</span>&lt;/<span class="tag">h2</span>&gt;
+  &lt;<span class="tag">p</span>&gt;<span class="j2">{{ text }}</span>&lt;/<span class="tag">p</span>&gt;
+&lt;/<span class="tag">body</span>&gt;</pre>
+          <ul class="clean">
+            <li>обрабатываются только элементы в <b>фигурных скобках</b> — остальной текст возвращается как есть;</li>
+            <li><code>{{ выражение }}</code> — команда <b>подставить значение</b> выражения в текст;</li>
+            <li>в выражении можно использовать переданные параметры, операции с ними и вызовы функций.</li>
+          </ul>
+        </div>
+        <p class="lead" style="margin-top:10px">Элементы оформления — в шаблоне, <span class="hl">данные не должны содержать оформление</span>.</p>
+      </div>
+      <span class="pagenum">12</span>
+    </section>
+
+    <!-- 13. url_for -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Процесс обработки шаблона</div>
+        <h2>Вызов функций в шаблоне: подключаем CSS</h2>
+        <pre class="code" style="margin-bottom:14px">&lt;<span class="tag">link</span> <span class="attr">rel</span>=<span class="str">"stylesheet"</span>
+      <span class="attr">href</span>=<span class="str">"<span class="j2">{{ url_for('static', filename='style.css') }}</span>"</span>&gt;</pre>
+        <ul class="clean">
+          <li>в двойных фигурных скобках подставляется <b>результат вызова функции</b>;</li>
+          <li>правило <code>"static"</code> применяется для ссылок на <b>статичные ресурсы</b>;</li>
+          <li><code>url_for</code> доступна процессу обработки шаблона без особых указаний;</li>
+          <li>файл должен находиться в папке <code>static_folder</code>.</li>
+        </ul>
+      </div>
+      <span class="pagenum">13</span>
+    </section>
+
+    <!-- 14. {% оператор %} -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Управление процессом обработки</div>
+        <h2>Операторы: {% оператор %}</h2>
+        <p class="lead" style="margin-bottom:16px">При обработке шаблона могут потребоваться <b>циклы и ветвления</b> — например, для формы выбора викторины или списка вопросов.</p>
+        <ul class="clean">
+          <li><code>{% оператор %}</code> — команда <b>управления процессом</b> обработки;</li>
+          <li>обработка шаблонов <b>не зависит от отступов</b>!</li>
+          <li>весь текст после оператора считается <b>вложенным в него</b>, пока не встретится завершающий оператор.</li>
+        </ul>
+      </div>
+      <span class="pagenum">14</span>
+    </section>
+
+    <!-- 15. if -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Операторы шаблонов</div>
+        <h2>Условный оператор: {% if %}</h2>
+        <div style="display:grid;grid-template-columns:1fr 1.1fr;gap:18px;flex:1;align-items:start">
+          <pre class="code"><span class="j2">{% if header %}</span>
+  &lt;<span class="tag">h2</span>&gt;<span class="j2">{{ header }}</span>&lt;/<span class="tag">h2</span>&gt;
+<span class="j2">{% else %}</span>
+  &lt;<span class="tag">h2</span>&gt;Нет заголовка&lt;/<span class="tag">h2</span>&gt;
+<span class="j2">{% endif %}</span></pre>
+          <ul class="clean">
+            <li><code>{% if условие %}</code> — текст выведется, если условие верно;</li>
+            <li><code>{% else %}</code> — если условие неверно;</li>
+            <li><code>{% endif %}</code> — конец условия;</li>
+            <li>условия как в Python: <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>and</code>, <code>or</code>, <code>not</code>. Переменная без значения возвращает <code>False</code>.</li>
+          </ul>
+        </div>
+      </div>
+      <span class="pagenum">15</span>
+    </section>
+
+    <!-- 16. for -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Операторы шаблонов</div>
+        <h2>Цикл: {% for %}</h2>
+        <p class="lead" style="margin-bottom:12px">Соберём список выбора викторины — по элементу для каждой записи из базы:</p>
+        <pre class="code" style="margin-bottom:14px">&lt;<span class="tag">select</span> <span class="attr">name</span>=<span class="str">"quiz"</span>&gt;
+<span class="j2">{% for id, name in q_list %}</span>
+    &lt;<span class="tag">option</span> <span class="attr">value</span>=<span class="str">"<span class="j2">{{ id }}</span>"</span>&gt;<span class="j2">{{ name }}</span>&lt;/<span class="tag">option</span>&gt;
+<span class="j2">{% endfor %}</span>
+&lt;/<span class="tag">select</span>&gt;</pre>
+        <ul class="clean">
+          <li><code>{% for переменные in перечень %}</code> — цикл с поочерёдным использованием значений;</li>
+          <li><code>{% endfor %}</code> — конец цикла.</li>
+        </ul>
+      </div>
+      <span class="pagenum">16</span>
+    </section>
+
+    <!-- 17. Шпаргалка -->
+    <section class="slide finale">
+      <div class="content">
+        <div class="eyebrow">Подведём итог</div>
+        <div class="big">Шпаргалка по <span>шаблонам</span></div>
+        <p class="lead" style="margin-bottom:12px"><span class="freq hot">🔥 часто</span>&nbsp; <span class="freq mid">◆ иногда</span></p>
+        <div class="taggrid" style="max-height:48vh;overflow:auto;padding-right:6px">
+          <div class="tg"><code>{{ выражение }}</code><span>подставить значение в текст</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>{% if условие %}</code><span>ветвление: если верно</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>{% else %}</code><span>ветвление: иначе</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>{% endif %}</code><span>конец условия</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>{% for x in список %}</code><span>цикл по элементам</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>{% endfor %}</code><span>конец цикла</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>{% set имя = значение %}</code><span>создание переменной</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>render_template()</code><span>обработка шаблона (в Python)</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>template_folder</code><span>папка с шаблонами</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>static_folder</code><span>папка со статикой</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>url_for('static', ...)</code><span>ссылка на статичный ресурс</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>&lt;input type="hidden"&gt;</code><span>данные формы без отображения</span><span class="freq mid">◆ иногда</span></div>
+        </div>
+      </div>
+      <span class="pagenum">17</span>
+    </section>
+
+    <!-- 18. Шаблон test -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Применяем в викторине</div>
+        <h2>Шаблон вопроса: test.html</h2>
+        <p class="lead" style="margin-bottom:12px">Данные об ответе отправляются на ту же страницу: <b>GET</b> — показать вопрос, <b>POST</b> — обработать ответ.</p>
+        <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:18px;flex:1;align-items:start">
+          <pre class="code">&lt;<span class="tag">h1</span>&gt;<span class="j2">{{ question }}</span>&lt;/<span class="tag">h1</span>&gt;
+&lt;<span class="tag">form</span> <span class="attr">method</span>=<span class="str">"post"</span> <span class="attr">action</span>=<span class="str">"test"</span>&gt;
+  &lt;<span class="tag">input</span> <span class="attr">type</span>=<span class="str">"hidden"</span> <span class="attr">name</span>=<span class="str">"q_id"</span>
+         <span class="attr">value</span>=<span class="str">"<span class="j2">{{ quest_id }}</span>"</span>&gt;
+  <span class="j2">{% for answer in answers_list %}</span>
+  &lt;<span class="tag">input</span> <span class="attr">type</span>=<span class="str">"radio"</span> <span class="attr">name</span>=<span class="str">"ans_text"</span>
+         <span class="attr">value</span>=<span class="str">"<span class="j2">{{ answer }}</span>"</span>&gt; <span class="j2">{{ answer }}</span>
+  <span class="j2">{% endfor %}</span>
+  &lt;<span class="tag">input</span> <span class="attr">type</span>=<span class="str">"submit"</span> <span class="attr">value</span>=<span class="str">"Ответить"</span>&gt;
+&lt;/<span class="tag">form</span>&gt;</pre>
+          <ul class="clean">
+            <li><code>type="hidden"</code> — хранит номер вопроса, но <b>ничего не показывает</b>;</li>
+            <li><code>type="radio"</code> — переключатели: выбрать можно только один ответ;</li>
+            <li>в шаблон передаются: <b>вопрос</b>, <b>номер</b>, <b>перемешанный список ответов</b> — правильный в коде не виден.</li>
+          </ul>
+        </div>
+      </div>
+      <span class="pagenum">18</span>
+    </section>
+
+    <!-- 19. Обработка ответа -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Применяем в викторине</div>
+        <h2>Сохранение и проверка ответа</h2>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:18px;flex:1;align-items:start">
+          <pre class="code"><span class="kw">def</span> <span class="fn">save_answers</span>():
+    answer   = request.form.<span class="fn">get</span>(<span class="str">'ans_text'</span>)
+    quest_id = request.form.<span class="fn">get</span>(<span class="str">'q_id'</span>)
+    session[<span class="str">'last_question'</span>] = quest_id
+    session[<span class="str">'total'</span>] += <span class="num">1</span>
+    <span class="kw">if</span> <span class="fn">check_answer</span>(quest_id, answer):
+        session[<span class="str">'answers'</span>] += <span class="num">1</span></pre>
+          <ul class="clean">
+            <li><code>request.form.get(имя)</code> — читаем данные из формы;</li>
+            <li>в сессию: <b>номер вопроса</b>, <b>total</b> — сколько задано, <b>answers</b> — сколько верных;</li>
+            <li><code>check_answer()</code> живёт в <code>db_scripts.py</code>: ищет верный ответ в БД и возвращает <b>True/False</b>;</li>
+            <li>страница результата <code>result.html</code> покажет <code>session['answers']</code> и <code>session['total']</code>.</li>
+          </ul>
+        </div>
+      </div>
+      <span class="pagenum">19</span>
+    </section>
+
+    <!-- 20. Финал -->
+    <section class="slide cover">
+      <span class="chip c1">🏆</span><span class="chip c2">{% %}</span><span class="chip c3">🚀</span>
+      <div class="kicker">В следующий раз…</div>
+      <h1>Закончим работу над сайтом <em>«Викторина»!</em></h1>
+      <p class="lead" style="margin-bottom:26px">Соберём всё вместе: шаблоны страниц, сохранение ответов, проверку через базу данных и итоговый результат пользователя.</p>
+      <div class="tags">
+        <span class="pill done">HTML ✔</span>
+        <span class="pill done">CSS ✔</span>
+        <span class="pill done">SQL ✔</span>
+        <span class="pill done">Flask ✔</span>
+        <span class="pill a">Шаблоны ✔</span>
+        <span class="pill t">Викторина — скоро</span>
+      </div>
+      <span class="pagenum">20</span>
+    </section>
+
+  </div>
+
+  <div class="nav">
+    <button class="btn" id="prev">← Назад</button>
+    <span class="hint">Листайте: клавиши ← → · пробел · клик по кнопкам · свайп на телефоне</span>
+    <button class="btn" id="next">Вперёд →</button>
+  </div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  const bar=document.getElementById('bar');
+  const counter=document.getElementById('counter');
+  const prevBtn=document.getElementById('prev');
+  const nextBtn=document.getElementById('next');
+  const DUR=720;
+  let cur=0, busy=false;
+
+  slides.forEach((s,i)=>{
+    s.style.transform='rotateY(0deg)';
+    s.style.display=(i===0)?'flex':'none';
+    s.style.zIndex=(i===0)?2:0;
+  });
+
+  function paint(n){
+    counter.textContent=(n+1)+' / '+total;
+    bar.style.width=(((n+1)/total)*100)+'%';
+    prevBtn.disabled=(n===0);
+    nextBtn.disabled=(n===total-1);
+  }
+
+  function go(n){
+    if(busy||n===cur||n<0||n>=total)return;
+    busy=true;
+    const dir=n>cur?1:-1;
+    const oldS=slides[cur], newS=slides[n];
+    paint(n);
+    newS.style.display='flex';
+
+    if(dir===1){
+      newS.style.zIndex=1; newS.style.transform='rotateY(0deg)';
+      oldS.style.zIndex=2; oldS.style.transform='rotateY(0deg)';
+      void oldS.offsetWidth;
+      oldS.style.transform='rotateY(-95deg)';
+    }else{
+      oldS.style.zIndex=1; oldS.style.transform='rotateY(0deg)';
+      newS.style.zIndex=2; newS.style.transform='rotateY(-95deg)';
+      void newS.offsetWidth;
+      newS.style.transform='rotateY(0deg)';
+    }
+
+    setTimeout(()=>{
+      oldS.style.display='none';
+      oldS.style.transform='rotateY(0deg)';
+      cur=n; busy=false; paint(cur);
+    },DUR);
+  }
+
+  prevBtn.onclick=()=>go(cur-1);
+  nextBtn.onclick=()=>go(cur+1);
+
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(cur+1);}
+    if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(cur-1);}
+    if(e.key==='Home'){e.preventDefault();go(0);}
+    if(e.key==='End'){e.preventDefault();go(total-1);}
+  });
+
+  let sx=null;
+  const book=document.getElementById('book');
+  book.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
+  book.addEventListener('touchend',e=>{
+    if(sx===null)return;
+    const dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>50){ dx<0?go(cur+1):go(cur-1); }
+    sx=null;
+  },{passive:true});
+
+  paint(0);
+})();
+</script>
+</body>
+</html>

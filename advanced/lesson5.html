@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask для начинающих. Динамический сайт и Сессии</title>
+    <style>
+        :root {
+            --bg-color: #1e1e2e;
+            --text-color: #cdd6f4;
+            --accent-color: #89b4fa;
+            --accent2-color: #f38ba8;
+            --accent3-color: #a6e3a1;
+            --code-bg: #11111b;
+            --card-bg: #313244;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 60px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 2.4rem;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent2-color);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            color: var(--accent2-color);
+            margin-bottom: 15px;
+        }
+
+        p, li {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            max-width: 950px;
+        }
+
+        ul {
+            list-style-type: none;
+            text-align: left;
+            max-width: 950px;
+        }
+
+        li::before {
+            content: "➤ ";
+            color: var(--accent3-color);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        code {
+            background-color: var(--code-bg);
+            color: var(--accent3-color);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.15rem;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid var(--accent-color);
+            overflow-x: auto;
+            max-width: 850px;
+            width: 100%;
+            margin: 15px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            font-size: 1.15rem;
+            color: #cdd6f4;
+            line-height: 1.5;
+        }
+
+        .keyword { color: #cba6f7; }
+        .string { color: #a6e3a1; }
+        .comment { color: #6c7086; font-style: italic; }
+        .func { color: #89b4fa; }
+
+        .highlight {
+            color: var(--accent2-color);
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: #a6adc8;
+            text-align: center;
+        }
+
+        .nav-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #a6adc8;
+            z-index: 100;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            font-size: 1.2rem;
+            color: #a6adc8;
+            z-index: 100;
+            background: rgba(0,0,0,0.4);
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+
+        .click-zone {
+            position: absolute;
+            top: 0;
+            width: 10%;
+            height: 100%;
+            z-index: 50;
+            cursor: pointer;
+        }
+        .click-zone.left { left: 0; }
+        .click-zone.right { right: 0; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            border-top: 4px solid var(--accent-color);
+        }
+        .card.warn {
+            border-top: 4px solid var(--accent2-color);
+        }
+        .card.success {
+            border-top: 4px solid var(--accent3-color);
+        }
+
+        .analogy {
+            background: rgba(137, 180, 250, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            max-width: 900px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="slide-counter"><span id="current">1</span> / <span id="total">14</span></div>
+<div class="nav-hint">Стрелки ← → или клики по краям экрана</div>
+
+<div class="click-zone left" onclick="changeSlide(-1)"></div>
+<div class="click-zone right" onclick="changeSlide(1)"></div>
+
+<div class="presentation-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+        <h1>Создаем динамический сайт<br>с помощью Flask</h1>
+        <p class="subtitle">Модуль 5. Урок 5</p>
+        <p class="subtitle" style="margin-top: 40px; font-size: 1.2rem;">От статических страниц к веб-приложениям, маршрутизации и сессиям</p>
+    </div>
+
+    <!-- Slide 2: Web Basics -->
+    <div class="slide">
+        <h2>Как устроен Веб? (Повторение)</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>👤 Клиент (Браузер)</h3>
+                <p>Запрашивает информацию. Отправляет <b>HTTP-запрос</b> по адресу (URL).</p>
+            </div>
+            <div class="card">
+                <h3>🖥️ Сервер</h3>
+                <p>Принимает запрос, обрабатывает его и отправляет обратно <b>HTTP-ответ</b> (HTML-страницу).</p>
+            </div>
+        </div>
+        <div class="analogy" style="margin-top: 30px;">
+            <b>URL</b> — это как адрес дома. <br>
+            <code>https://site.com/test</code> <br>
+            <b>Протокол</b> (https) → <b>Домен</b> (site.com) → <b>Путь</b> (/test).
+        </div>
+    </div>
+
+    <!-- Slide 3: Static vs Dynamic -->
+    <div class="slide">
+        <h2>Статический vs Динамический сайт</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>📄 Статический сайт</h3>
+                <ul>
+                    <li>Сервер просто хранит готовые HTML-файлы.</li>
+                    <li>Отдает один и тот же файл всем посетителям.</li>
+                    <li><i>Пример: Визитка, инструкция.</i></li>
+                </ul>
+            </div>
+            <div class="card success">
+                <h3>⚙️ Динамический сайт (Веб-приложение)</h3>
+                <ul>
+                    <li>Сервер передает запрос в <b>Программу (Приложение)</b>.</li>
+                    <li>Программа берет данные из <b>Базы Данных</b>.</li>
+                    <li>Программа <b>на лету собирает</b> уникальный HTML.</li>
+                    <li><i>Пример: Соцсети, интернет-магазины, наша Викторина.</i></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: What is Flask -->
+    <div class="slide">
+        <h2>Знакомство с Flask 🌶️</h2>
+        <p><span class="highlight">Flask</span> — это библиотека для языка Python, которая превращает вашу обычную программу в <b>веб-сервер</b>.</p>
+        <div class="analogy">
+            <b>Аналогия:</b> Если Python — это ваш мозг, то Flask — это уши и рот, которые позволяют вашему мозгу слышать запросы из браузера и отвечать на них.
+        </div>
+        <p style="margin-top: 20px;">Flask называется <b>микрофреймворком</b>, потому что он очень простой и дает только базовые инструменты, не навязывая лишних правил.</p>
+    </div>
+
+    <!-- Slide 5: First Flask Code -->
+    <div class="slide">
+        <h2>Первый запуск Flask</h2>
+        <p>Любое Flask-приложение начинается с создания объекта <code>app</code> и его запуска.</p>
+        <pre><code><span class="keyword">from</span> flask <span class="keyword">import</span> Flask
+
+<span class="comment"># Создаем объект веб-приложения</span>
+app = Flask(__name__)
+
+<span class="comment"># Запускаем веб-сервер</span>
+<span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:
+    app.run()</code></pre>
+        <p style="margin-top: 15px;"><b>Что здесь происходит?</b><br>
+        <code>Flask(__name__)</code> говорит Flask'у: "Используй имя этого файла, чтобы находить шаблоны и ресурсы".<br>
+        <code>app.run()</code> запускает бесконечный цикл ожидания запросов от браузеров.</p>
+    </div>
+
+    <!-- Slide 6: Routing -->
+    <div class="slide">
+        <h2>Маршрутизация (URL Rules)</h2>
+        <p>Как сервер понимает, какую функцию запустить при запросе адреса <code>/test</code>? Мы должны связать <b>URL</b> и <b>Функцию</b>.</p>
+        <pre><code><span class="comment"># Связываем адрес '/' с функцией index</span>
+app.add_url_rule(<span class="string">'/'</span>, <span class="string">'index'</span>, index)
+
+<span class="comment"># Связываем адрес '/test' с функцией test</span>
+app.add_url_rule(<span class="string">'/test'</span>, <span class="string">'test'</span>, test)</code></pre>
+        <div class="analogy">
+            <b>Маршрутизация</b> — это как настройка переадресации на телефоне. "Если звонят на номер /test — соединяй с функцией test()".
+        </div>
+    </div>
+
+    <!-- Slide 7: Views -->
+    <div class="slide">
+        <h2>Представления (Views)</h2>
+        <p><span class="highlight">VIEW (Представление)</span> — это функция, которая формирует ответ для браузера.</p>
+        <pre><code><span class="keyword">def</span> <span class="func">index</span>():
+    <span class="keyword">return</span> <span class="string">"&lt;h1&gt;Добро пожаловать в Викторину!&lt;/h1&gt;"</span>
+
+<span class="keyword">def</span> <span class="func">test</span>():
+    <span class="keyword">return</span> <span class="string">"&lt;p&gt;Здесь будет вопрос...&lt;/p&gt;"</span></code></pre>
+        <p>Функция <b>обязана</b> вернуть строку (HTML-код, текст или JSON). Именно эту строку сервер отправит в браузер.</p>
+    </div>
+
+    <!-- Slide 8: Navigation -->
+    <div class="slide">
+        <h2>Навигация: Ссылки vs Перенаправление</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>🔗 Ссылка (Выбор пользователя)</h3>
+                <p>Сервер отправляет HTML с тегом <code>&lt;a&gt;</code>. Пользователь сам решает, кликнуть или нет.</p>
+                <pre><code><span class="keyword">return</span> <span class="string">'&lt;a href="/test"&gt;Начать&lt;/a&gt;'</span></code></pre>
+            </div>
+            <div class="card success">
+                <h3>🚀 Перенаправление (Решение сервера)</h3>
+                <p>Сервер сам говорит браузеру: "Срочно иди на другой адрес!". Пользователь даже не замечает подмены.</p>
+                <pre><code><span class="keyword">from</span> flask <span class="keyword">import</span> redirect, url_for
+
+<span class="keyword">return</span> redirect(url_for(<span class="string">'result'</span>))</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Project Structure -->
+    <div class="slide">
+        <h2>Структура нашего приложения (Викторина)</h2>
+        <p>Наш сайт будет состоять из трех логических страниц (ресурсов):</p>
+        <div class="grid-3">
+            <div class="card" style="text-align: center;">
+                <h3>1. Старт</h3>
+                <p><code>url: '/'</code></p>
+                <p>Функция <code>index()</code></p>
+                <p style="font-size: 1.1rem; color: #a6adc8;">Выбор викторины и старт</p>
+            </div>
+            <div class="card" style="text-align: center;">
+                <h3>2. Тест</h3>
+                <p><code>url: '/test'</code></p>
+                <p>Функция <code>test()</code></p>
+                <p style="font-size: 1.1rem; color: #a6adc8;">Показ вопросов по одному</p>
+            </div>
+            <div class="card" style="text-align: center;">
+                <h3>3. Финиш</h3>
+                <p><code>url: '/result'</code></p>
+                <p>Функция <code>result()</code></p>
+                <p style="font-size: 1.1rem; color: #a6adc8;">Итоги и количество баллов</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: The Problem -->
+    <div class="slide">
+        <h2>⚠️ Главная ловушка новичка</h2>
+        <p>Нам нужно хранить номер текущего вопроса и счетчик баллов. Первая мысль — использовать <b>глобальные переменные</b>:</p>
+        <pre><code>current_question_id = <span class="keyword">None</span>
+score = <span class="keyword">0</span>
+
+<span class="keyword">def</span> <span class="func">test</span>():
+    <span class="keyword">global</span> score
+    score += <span class="keyword">1</span> <span class="comment"># Увеличиваем счетчик</span></code></pre>
+        <div class="card warn" style="margin-top: 20px; max-width: 850px;">
+            <h3 style="color: var(--accent2-color);">Почему это сломается?</h3>
+            <p>Веб-сервер работает <b>для всех пользователей одновременно</b> в одном процессе!</p>
+            <p>Если Вася и Петя одновременно зайдут на сайт, они будут <b>менять одну и ту же переменную</b> <code>score</code>. Они будут мешать друг другу!</p>
+        </div>
+    </div>
+
+    <!-- Slide 11: Sessions Concept -->
+    <div class="slide">
+        <h2>Решение: Сессии (Sessions) 🔐</h2>
+        <p>Нам нужно дать каждому пользователю <b>свой личный "сейф"</b> для хранения данных.</p>
+        <div class="analogy">
+            <b>Аналогия:</b> Глобальная переменная — это одна доска в классе, где все пишут мелом одновременно. <br>
+            <b>Сессия</b> — это личный блокнот у каждого ученика. Вася пишет в свой, Петя — в свой.
+        </div>
+        <p>Во Flask есть встроенный объект <code>session</code>, который работает как словарь (ключ-значение), но <b>отдельный для каждого браузера</b>.</p>
+    </div>
+
+    <!-- Slide 12: Sessions Code -->
+    <div class="slide">
+        <h2>Работа с session в коде</h2>
+        <pre><code><span class="keyword">from</span> flask <span class="keyword">import</span> session
+
+<span class="keyword">def</span> <span class="func">test</span>():
+    <span class="comment"># Читаем данные из "личного блокнота" пользователя</span>
+    score = session.get(<span class="string">'score'</span>, <span class="keyword">0</span>)
+    
+    <span class="comment"># Обновляем данные</span>
+    session[<span class="string">'score'</span>] = score + <span class="keyword">1</span>
+    session[<span class="string">'question_id'</span>] = <span class="keyword">5</span></code></pre>
+        <p>Flask сам понимает, кто обратился к сайту, и подставляет данные именно этого клиента.</p>
+    </div>
+
+    <!-- Slide 13: Secret Key & Cookies -->
+    <div class="slide">
+        <h2>Секретный ключ и Cookie 🍪</h2>
+        <div class="grid">
+            <div class="card warn">
+                <h3>🔐 SECRET_KEY</h3>
+                <p>Данные сессии нужно шифровать, чтобы пользователь не мог их подделать в браузере.</p>
+                <p>Flask потребует от вас задать секретный ключ:</p>
+                <pre><code>app.config[<span class="string">'SECRET_KEY'</span>] = <span class="string">'МойСекретныйКлюч123'</span></code></pre>
+            </div>
+            <div class="card success">
+                <h3>🍪 Как это работает? (Cookie)</h3>
+                <p>Сервер выдает браузеру "пропуск" (Cookie) с зашифрованным ID сессии.</p>
+                <p>При каждом следующем клике браузер показывает этот "пропуск" охраннику (серверу), и сервер понимает: "Ага, это снова Вася, достаньте его блокнот!".</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 14: Summary -->
+    <div class="slide">
+        <h2>Итоги урока</h2>
+        <ul>
+            <li><b>Flask</b> позволяет писать веб-серверы на Python.</li>
+            <li><b>Маршрутизация</b> (<code>add_url_rule</code>) связывает URL-адреса с функциями.</li>
+            <li><b>View (Представление)</b> — это функция, которая возвращает HTML для браузера.</li>
+            <li><b>Глобальные переменные</b> в вебе не работают, так как они общие для всех пользователей.</li>
+            <li><b>Сессии (<code>session</code>)</b> и <b>Cookie</b> позволяют хранить личные данные каждого пользователя отдельно.</li>
+        </ul>
+        <h3 style="margin-top: 30px; text-align: center; color: var(--accent3-color);">🚀 Следующий шаг: Учимся принимать данные от пользователя (HTML-формы)</h3>
+    </div>
+
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    const currentSpan = document.getElementById('current');
+    const totalSpan = document.getElementById('total');
+    let currentSlide = 0;
+
+    totalSpan.textContent = slides.length;
+
+    function updateSlides() {
+        slides.forEach((slide, index) => {
+            slide.classList.remove('active');
+            if (index === currentSlide) {
+                slide.classList.add('active');
+            }
+        });
+        currentSpan.textContent = currentSlide + 1;
+    }
+
+    function changeSlide(direction) {
+        currentSlide += direction;
+        if (currentSlide >= slides.length) {
+            currentSlide = 0;
+        }
+        if (currentSlide < 0) {
+            currentSlide = slides.length - 1;
+        }
+        updateSlides();
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+            changeSlide(1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            changeSlide(-1);
+        }
+    });
+</script>
+
+</body>
+</html>

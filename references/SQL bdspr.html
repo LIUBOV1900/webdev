@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Шпаргалка</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f7f6;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 13px;
+            border: 2px solid;
+        }
+
+        .leg-read { background: #e8f5e9; color: #28a745; border-color: #28a745; }
+        .leg-dml { background: #fff8e1; color: #d35400; border-color: #f39c12; }
+        .leg-ddl { background: #ffebee; color: #c0392b; border-color: #e74c3c; }
+        .leg-ctrl { background: #eceff1; color: #7f8c8d; border-color: #7f8c8d; }
+
+        .sections {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .section {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #ddd;
+        }
+
+        .section-header {
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .header-read { background: #28a745; }
+        .header-dml { background: #f39c12; }
+        .header-ddl { background: #e74c3c; }
+        .header-ctrl { background: #7f8c8d; }
+
+        .commands {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .cmd {
+            background: #fafafa;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #ccc;
+        }
+
+        .cmd.read { border-left-color: #28a745; }
+        .cmd.dml { border-left-color: #f39c12; }
+        .cmd.ddl { border-left-color: #e74c3c; }
+        .cmd.ctrl { border-left-color: #7f8c8d; }
+
+        .cmd-name {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 15px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .cmd-desc {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 2px solid #ffeeba;
+            color: #856404;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 13px;
+            grid-column: 1 / -1;
+        }
+
+        .warning strong { color: #d35400; }
+
+        @media (max-width: 768px) {
+            .sections { grid-template-columns: 1fr; }
+            .commands { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📊 SQL Шпаргалка: Влияние команд на базу данных</h1>
+
+    <div class="legend">
+        <div class="legend-item leg-read">🟢 НЕ МЕНЯЮТ</div>
+        <div class="legend-item leg-dml">🟠 МЕНЯЮТ ДАННЫЕ</div>
+        <div class="legend-item leg-ddl">🔴 МЕНЯЮТ СТРУКТУРУ</div>
+        <div class="legend-item leg-ctrl">⚪ УПРАВЛЕНИЕ</div>
+    </div>
+
+    <div class="sections">
+        <div class="section">
+            <div class="section-header header-read">🟢 НЕ МЕНЯЮТ БД (Только чтение)</div>
+            <div class="commands">
+                <div class="cmd read">
+                    <div class="cmd-name">SELECT</div>
+                    <div class="cmd-desc">Извлекает данные из таблиц. База остается нетронутой, результат только в памяти.</div>
+                </div>
+                <div class="cmd read">
+                    <div class="cmd-name">EXPLAIN</div>
+                    <div class="cmd-desc">Показывает план выполнения запроса или структуру таблицы. Только информация.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header header-dml">🟠 МЕНЯЮТ ДАННЫЕ (DML)</div>
+            <div class="commands">
+                <div class="cmd dml">
+                    <div class="cmd-name">INSERT</div>
+                    <div class="cmd-desc">Добавляет новые строки в существующую таблицу.</div>
+                </div>
+                <div class="cmd dml">
+                    <div class="cmd-name">UPDATE</div>
+                    <div class="cmd-desc">Изменяет значения в существующих строках. Обычно с WHERE!</div>
+                </div>
+                <div class="cmd dml">
+                    <div class="cmd-name">DELETE</div>
+                    <div class="cmd-desc">Удаляет строки из таблицы. Место на диске освобождается не сразу.</div>
+                </div>
+                <div class="cmd dml">
+                    <div class="cmd-name">MERGE</div>
+                    <div class="cmd-desc">Комбинированная операция: INSERT, UPDATE или DELETE (UPSERT).</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header header-ddl">🔴 МЕНЯЮТ СТРУКТУРУ (DDL)</div>
+            <div class="commands">
+                <div class="cmd ddl">
+                    <div class="cmd-name">CREATE</div>
+                    <div class="cmd-desc">Создает новые объекты: БД, таблицы, индексы, представления.</div>
+                </div>
+                <div class="cmd ddl">
+                    <div class="cmd-name">ALTER</div>
+                    <div class="cmd-desc">Изменяет структуру объекта: добавляет/удаляет колонки, меняет типы.</div>
+                </div>
+                <div class="cmd ddl">
+                    <div class="cmd-name">DROP</div>
+                    <div class="cmd-desc">Полностью удаляет объект из БД вместе со всеми данными.</div>
+                </div>
+                <div class="cmd ddl">
+                    <div class="cmd-name">TRUNCATE</div>
+                    <div class="cmd-desc">Удаляет все данные из таблицы, но структура остается. Сбрасывает ID.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header header-ctrl">⚪ УПРАВЛЕНИЕ (DCL/TCL)</div>
+            <div class="commands">
+                <div class="cmd ctrl">
+                    <div class="cmd-name">GRANT/REVOKE</div>
+                    <div class="cmd-desc">Управляют правами доступа: кто может читать/писать данные.</div>
+                </div>
+                <div class="cmd ctrl">
+                    <div class="cmd-name">COMMIT</div>
+                    <div class="cmd-desc">Сохраняет все изменения текущей транзакции навсегда.</div>
+                </div>
+                <div class="cmd ctrl">
+                    <div class="cmd-name">ROLLBACK</div>
+                    <div class="cmd-desc">Отменяет изменения транзакции, возвращая БД в прежнее состояние.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Ловушка:</strong> <code>CREATE TABLE AS SELECT...</code> или <code>SELECT ... INTO</code> меняют структуру БД, хотя содержат SELECT!
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

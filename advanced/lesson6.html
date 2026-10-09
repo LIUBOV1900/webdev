@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask: Получение и обработка данных</title>
+    <style>
+        :root {
+            --bg-color: #1e1e2e;
+            --text-color: #cdd6f4;
+            --accent-color: #89b4fa;
+            --accent2-color: #f38ba8;
+            --accent3-color: #a6e3a1;
+            --code-bg: #11111b;
+            --card-bg: #313244;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 60px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 2.4rem;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent2-color);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            color: var(--accent2-color);
+            margin-bottom: 15px;
+        }
+
+        p, li {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            max-width: 950px;
+        }
+
+        ul {
+            list-style-type: none;
+            text-align: left;
+            max-width: 950px;
+        }
+
+        li::before {
+            content: "➤ ";
+            color: var(--accent3-color);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        code {
+            background-color: var(--code-bg);
+            color: var(--accent3-color);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.15rem;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid var(--accent-color);
+            overflow-x: auto;
+            max-width: 850px;
+            width: 100%;
+            margin: 15px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            font-size: 1.15rem;
+            color: #cdd6f4;
+            line-height: 1.5;
+        }
+
+        .keyword { color: #cba6f7; }
+        .string { color: #a6e3a1; }
+        .comment { color: #6c7086; font-style: italic; }
+        .func { color: #89b4fa; }
+
+        .highlight {
+            color: var(--accent2-color);
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: #a6adc8;
+            text-align: center;
+        }
+
+        .nav-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #a6adc8;
+            z-index: 100;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            font-size: 1.2rem;
+            color: #a6adc8;
+            z-index: 100;
+            background: rgba(0,0,0,0.4);
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+
+        .click-zone {
+            position: absolute;
+            top: 0;
+            width: 10%;
+            height: 100%;
+            z-index: 50;
+            cursor: pointer;
+        }
+        .click-zone.left { left: 0; }
+        .click-zone.right { right: 0; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            border-top: 4px solid var(--accent-color);
+        }
+        .card.warn {
+            border-top: 4px solid var(--accent2-color);
+        }
+        .card.success {
+            border-top: 4px solid var(--accent3-color);
+        }
+
+        .analogy {
+            background: rgba(137, 180, 250, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            max-width: 900px;
+            font-style: italic;
+        }
+        
+        .flow-chart {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .flow-box {
+            background: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 8px;
+            border: 2px solid var(--accent-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        .flow-arrow {
+            font-size: 2rem;
+            color: var(--accent2-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="slide-counter"><span id="current">1</span> / <span id="total">15</span></div>
+<div class="nav-hint">Стрелки ← → или клики по краям экрана</div>
+
+<div class="click-zone left" onclick="changeSlide(-1)"></div>
+<div class="click-zone right" onclick="changeSlide(1)"></div>
+
+<div class="presentation-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+        <h1>Получение и обработка данных<br>от пользователя</h1>
+        <p class="subtitle">Модуль 5. Урок 6</p>
+        <p class="subtitle" style="margin-top: 40px; font-size: 1.2rem;">HTTP-методы, HTML-формы и объект request во Flask</p>
+    </div>
+
+    <!-- Slide 2: Recap & Goal -->
+    <div class="slide">
+        <h2>Контекст: Что мы уже умеем?</h2>
+        <div class="grid">
+            <div class="card success">
+                <h3>✅ Уже готово</h3>
+                <ul>
+                    <li>Создали базу данных с викторинами и вопросами.</li>
+                    <li>Написали Flask-приложение (маршруты, views).</li>
+                    <li>Научились использовать <b>сессии</b> для изоляции пользователей.</li>
+                </ul>
+            </div>
+            <div class="card warn">
+                <h3>🎯 Следующая цель</h3>
+                <ul>
+                    <li>Научить приложение <b>принимать</b> данные от пользователя.</li>
+                    <li>Пользователь должен сам выбирать викторину и отправлять ответы.</li>
+                    <li>Сервер должен эти ответы <b>читать и обрабатывать</b>.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Data Flow -->
+    <div class="slide">
+        <h2>Путь данных: От клика до базы</h2>
+        <p>Как информация проходит от пальца пользователя до нашего Python-кода?</p>
+        <div class="flow-chart">
+            <div class="flow-box">👤 Пользователь<br><small>(Вводит данные)</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box">🌐 Браузер<br><small>(Формирует запрос)</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box">🖥️ Сервер (Flask)<br><small>(Читает и обрабатывает)</small></div>
+        </div>
+        <div class="analogy">
+            <b>Три главных вопроса:</b><br>
+            1. Как браузер позволит человеку ввести информацию? (<b>HTML-формы</b>)<br>
+            2. Как браузер передаст эти данные? (<b>HTTP-методы</b>)<br>
+            3. Как Flask-приложение их прочитает? (<b>Объект request</b>)
+        </div>
+    </div>
+
+    <!-- Slide 4: HTTP Methods Intro -->
+    <div class="slide">
+        <h2>HTTP-методы: GET и POST</h2>
+        <p>Когда браузер отправляет запрос на сервер, он указывает <b>метод</b> — то есть говорит, <i>как именно</i> он хочет взаимодействовать.</p>
+        <div class="grid">
+            <div class="card">
+                <h3>📥 GET (Получить)</h3>
+                <p>Изначально создан для <b>получения</b> данных. Но может и передавать их.</p>
+                <p><i>Пример: Открытие страницы, переход по ссылке.</i></p>
+            </div>
+            <div class="card success">
+                <h3>📤 POST (Отправить)</h3>
+                <p>Создан специально для <b>отправки</b> данных на сервер (формы, логины, файлы).</p>
+                <p><i>Пример: Отправка ответа в тесте, оплата товара.</i></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: GET Method -->
+    <div class="slide">
+        <h2>Метод GET: Данные в URL</h2>
+        <p>При методе GET все дополнительные данные «приписываются» прямо к адресу (URL) через знак <code>?</code>.</p>
+        <pre><code>GET /search?q=<span class="string">flask</span>&lang=<span class="string">ru</span> HTTP/1.1</code></pre>
+        <div class="grid" style="margin-top: 20px;">
+            <div class="card">
+                <h3>✅ Плюсы</h3>
+                <ul>
+                    <li>Можно сохранить ссылку в закладки.</li>
+                    <li>Можно поделиться ссылкой с другом.</li>
+                </ul>
+            </div>
+            <div class="card warn">
+                <h3>❌ Минусы</h3>
+                <ul>
+                    <li><b>Видны всем</b> (в адресной строке, в истории).</li>
+                    <li>Ограничение по размеру (около 2000 символов).</li>
+                    <li>Нельзя передать сложные данные или файлы.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: POST Method -->
+    <div class="slide">
+        <h2>Метод POST: Данные в «теле»</h2>
+        <p>При методе POST URL остается чистым, а все данные прячутся внутри <b>тела (body)</b> HTTP-запроса.</p>
+        <pre><code>POST /login HTTP/1.1
+<span class="comment">...заголовки...</span>
+
+<span class="string">username=admin&password=12345</span> <span class="comment">&lt;-- Тело запроса</span></code></pre>
+        <div class="card success" style="margin-top: 20px; max-width: 850px;">
+            <h3>🏆 Почему мы будем использовать POST?</h3>
+            <ul>
+                <li><b>Безопасность:</b> Данные (например, пароли) не светятся в адресной строке.</li>
+                <li><b>Объем:</b> Нет жестких ограничений на размер передаваемых данных.</li>
+                <li><b>Удобство:</b> Можно передавать сложные структуры и файлы.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 7: HTML Forms -->
+    <div class="slide">
+        <h2>HTML-формы: Интерфейс для ввода</h2>
+        <p>Чтобы пользователь мог ввести данные, мы размечаем на странице <b>форму</b>. Все элементы, которые нужно отправить, оборачиваются в тег <code>&lt;form&gt;</code>.</p>
+        <pre><code><span class="keyword">&lt;form</span> <span class="func">method</span>=<span class="string">"POST"</span> <span class="func">action</span>=<span class="string">"/test"</span><span class="keyword">&gt;</span>
+    
+    <span class="comment">&lt;!-- Сюда мы поместим поля ввода --&gt;</span>
+
+<span class="keyword">&lt;/form&gt;</span></code></pre>
+        <div class="grid" style="margin-top: 15px;">
+            <div class="card">
+                <h3>📍 Атрибут <code>action</code></h3>
+                <p><b>Куда</b> отправляем данные? (URL ресурса, который будет их обрабатывать).</p>
+            </div>
+            <div class="card">
+                <h3>🚀 Атрибут <code>method</code></h3>
+                <p><b>Каким методом</b> отправляем? (В нашем случае всегда <code>"POST"</code>).</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Form Elements -->
+    <div class="slide">
+        <h2>Элементы ввода и пары «Имя-Значение»</h2>
+        <p>Каждый элемент формы должен иметь атрибут <code>name</code>. Именно по этому имени Flask будет искать данные!</p>
+        <div class="grid">
+            <div class="card">
+                <h3>Текст и Кнопки</h3>
+                <pre><code><span class="comment">&lt;!-- Однострочное поле --&gt;</span>
+&lt;input <span class="func">type</span>=<span class="string">"text"</span> <span class="func">name</span>=<span class="string">"login"</span>&gt;
+
+<span class="comment">&lt;!-- Многострочное поле --&gt;</span>
+&lt;textarea <span class="func">name</span>=<span class="string">"comment"</span>&gt;&lt;/textarea&gt;</code></pre>
+            </div>
+            <div class="card">
+                <h3>Выбор вариантов</h3>
+                <pre><code><span class="comment">&lt;!-- Переключатели (только один) --&gt;</span>
+&lt;input <span class="func">type</span>=<span class="string">"radio"</span> <span class="func">name</span>=<span class="string">"q1"</span> <span class="func">value</span>=<span class="string">"a"</span>&gt;
+
+<span class="comment">&lt;!-- Флажки (можно несколько) --&gt;</span>
+&lt;input <span class="func">type</span>=<span class="string">"checkbox"</span> <span class="func">name</span>=<span class="string">"hobby"</span> <span class="func">value</span>=<span class="string">"sport"</span>&gt;</code></pre>
+            </div>
+        </div>
+        <p style="margin-top: 15px;">На сервер улетают пары: <code>name="login"</code> → <code>value="Вася"</code>.</p>
+    </div>
+
+    <!-- Slide 9: Submit & Select -->
+    <div class="slide">
+        <h2>Выпадающие списки и Кнопка отправки</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>📋 Выпадающий список</h3>
+                <p>Удобно, когда вариантов много. Внутри <code>&lt;select&gt;</code> лежат <code>&lt;option&gt;</code>.</p>
+                <pre><code>&lt;select <span class="func">name</span>=<span class="string">"quiz_id"</span>&gt;
+  &lt;option <span class="func">value</span>=<span class="string">"1"</span>&gt;Викторина 1&lt;/option&gt;
+  &lt;option <span class="func">value</span>=<span class="string">"2"</span>&gt;Викторина 2&lt;/option&gt;
+&lt;/select&gt;</code></pre>
+            </div>
+            <div class="card success">
+                <h3>🚀 Кнопка отправки (Submit)</h3>
+                <p>Именно этот элемент «собирает» все данные из формы и отправляет их на сервер по адресу из <code>action</code>.</p>
+                <pre><code>&lt;input <span class="func">type</span>=<span class="string">"submit"</span> <span class="func">value</span>=<span class="string">"Начать тест!"</span>&gt;
+
+<span class="comment">&lt;!-- Или современная кнопка: --&gt;</span>
+&lt;button <span class="func">type</span>=<span class="string">"submit"</span>&gt;Отправить&lt;/button&gt;</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: Flask `request` object -->
+    <div class="slide">
+        <h2>Читаем данные во Flask: объект `request`</h2>
+        <p>Когда браузер отправляет POST-запрос, Flask «ловит» его и кладет всю информацию в специальный объект — <code>request</code> (запрос).</p>
+        <pre><code><span class="keyword">from</span> flask <span class="keyword">import</span> request
+
+<span class="keyword">def</span> <span class="func">test</span>():
+    <span class="comment"># Смотрим, каким методом пришел запрос</span>
+    <span class="keyword">if</span> request.method == <span class="string">'POST'</span>:
+        <span class="comment"># Обработка отправленных данных</span>
+        <span class="keyword">pass</span>
+    <span class="keyword">else</span>:
+        <span class="comment"># Если просто зашли на страницу (GET)</span>
+        <span class="keyword">pass</span></code></pre>
+        <p>Объект <code>request</code> живет только внутри одной функции-view и содержит данные именно текущего клиента.</p>
+    </div>
+
+    <!-- Slide 11: Reading Form Data -->
+    <div class="slide">
+        <h2>Достаем значения из формы</h2>
+        <p>Если форма была отправлена методом POST, все пары «имя-значение» попадают в словарь <code>request.form</code>.</p>
+        <pre><code><span class="keyword">from</span> flask <span class="keyword">import</span> request
+
+<span class="keyword">def</span> <span class="func">index</span>():
+    <span class="keyword">if</span> request.method == <span class="string">'POST'</span>:
+        <span class="comment"># Достаем значение по атрибуту name из HTML</span>
+        quiz_id = request.form.get(<span class="string">'quiz_id'</span>)
+        
+        <span class="comment"># Сохраняем в сессию пользователя</span>
+        session[<span class="string">'quiz_id'</span>] = quiz_id
+        
+        <span class="keyword">return</span> redirect(url_for(<span class="string">'test'</span>))</code></pre>
+        <div class="analogy">
+            <b>Важно:</b> Метод <code>.get('имя')</code> безопаснее, чем прямое обращение <code>['имя']</code>. Если пользователь не выбрал ничего, <code>.get()</code> вернет <code>None</code>, а не вызовет ошибку crashes.
+        </div>
+    </div>
+
+    <!-- Slide 12: Allowing Methods -->
+    <div class="slide">
+        <h2>Разрешаем методы в Flask</h2>
+        <p>По умолчанию Flask-маршруты принимают <b>только GET</b>-запросы. Если мы отправим на такой адрес POST-форму, сервер выдаст ошибку <code>405 Method Not Allowed</code>.</p>
+        <p>Нужно явно разрешить POST в правиле URL:</p>
+        <pre><code><span class="comment"># Добавляем необязательный параметр methods</span>
+app.add_url_rule(
+    <span class="string">'/'</span>, 
+    <span class="string">'index'</span>, 
+    index, 
+    methods=[<span class="string">'GET'</span>, <span class="string">'POST'</span>] <span class="comment"># &lt;-- Разрешаем оба метода</span>
+)</code></pre>
+        <p>Теперь функция <code>index()</code> будет срабатывать и при первом заходе (GET), и при отправке формы (POST).</p>
+    </div>
+
+    <!-- Slide 13: Practical Logic -->
+    <div class="slide">
+        <h2>Практика: Логика главной страницы</h2>
+        <p>Функция <code>index()</code> теперь работает как «развилка» в зависимости от метода:</p>
+        <div class="grid">
+            <div class="card">
+                <h3>📥 Если GET (первый заход)</h3>
+                <ul>
+                    <li>Берем из БД список всех викторин.</li>
+                    <li>Генерируем HTML-код с формой (<code>&lt;form&gt;</code>) и выпадающим списком (<code>&lt;select&gt;</code>).</li>
+                    <li>Возвращаем этот HTML пользователю.</li>
+                </ul>
+            </div>
+            <div class="card success">
+                <h3>📤 Если POST (нажали кнопку)</h3>
+                <ul>
+                    <li>Читаем ID выбранной викторины: <code>request.form.get('quiz')</code>.</li>
+                    <li>Кладем ID в сессию: <code>session['quiz'] = ...</code>.</li>
+                    <li>Делаем <code>redirect</code> на страницу <code>/test</code>.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 14: Error Handling -->
+    <div class="slide">
+        <h2>⚠️ Защита от ошибок (Хакер-режим)</h2>
+        <p>Что если пользователь — хитрый и вручную вбил в адресную строку <code>site.com/test</code>, не выбрав викторину?</p>
+        <div class="card warn" style="margin-top: 20px; max-width: 850px;">
+            <h3 style="color: var(--accent2-color);">Проблема</h3>
+            <p>В сессии нет <code>quiz_id</code>. Код попытается найти вопросы для несуществующей викторины и упадет с ошибкой!</p>
+        </div>
+        <div class="card success" style="margin-top: 20px; max-width: 850px;">
+            <h3 style="color: var(--accent3-color);">Решение: Проверка на странице /test</h3>
+            <pre><code><span class="keyword">def</span> <span class="func">test</span>():
+    <span class="keyword">if</span> <span class="string">'quiz'</span> <span class="keyword">not in</span> session:
+        <span class="comment"># Если викторина не выбрана, выгоняем на главную</span>
+        <span class="keyword">return</span> redirect(url_for(<span class="string">'index'</span>))
+    
+    <span class="comment"># ... остальной код показа вопроса ...</span></code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 15: Summary -->
+    <div class="slide">
+        <h2>Итоги урока</h2>
+        <ul>
+            <li><b>HTTP-методы:</b> GET для получения (данные в URL), POST для отправки (данные в теле). Мы используем POST.</li>
+            <li><b>HTML-формы:</b> Тег <code>&lt;form&gt;</code> с атрибутами <code>method</code> и <code>action</code> собирает данные пользователя.</li>
+            <li><b>Элементы ввода:</b> У каждого должен быть уникальный атрибут <code>name</code>, по которому мы ищем данные.</li>
+            <li><b>Объект <code>request</code>:</b> Позволяет во Flask проверить метод (<code>request.method</code>) и прочитать данные (<code>request.form.get()</code>).</li>
+            <li><b>Безопасность:</b> Всегда проверяйте, есть ли нужные данные в сессии, перед их использованием!</li>
+        </ul>
+        <h3 style="margin-top: 30px; text-align: center; color: var(--accent3-color);">🚀 Следующий шаг: Оптимизация HTML-кода с помощью шаблонов Jinja2</h3>
+    </div>
+
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    const currentSpan = document.getElementById('current');
+    const totalSpan = document.getElementById('total');
+    let currentSlide = 0;
+
+    totalSpan.textContent = slides.length;
+
+    function updateSlides() {
+        slides.forEach((slide, index) => {
+            slide.classList.remove('active');
+            if (index === currentSlide) {
+                slide.classList.add('active');
+            }
+        });
+        currentSpan.textContent = currentSlide + 1;
+    }
+
+    function changeSlide(direction) {
+        currentSlide += direction;
+        if (currentSlide >= slides.length) {
+            currentSlide = 0;
+        }
+        if (currentSlide < 0) {
+            currentSlide = slides.length - 1;
+        }
+        updateSlides();
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+            changeSlide(1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            changeSlide(-1);
+        }
+    });
+</script>
+
+</body>
+</html>

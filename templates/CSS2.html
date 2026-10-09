@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Шпаргалка по CSS — Часть 2</title>
+<style>
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 10px;
+    }
+
+    .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        background: #fff;
+        padding: 14mm;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 36px;
+        background: linear-gradient(90deg, #001f5c, #2adede, #8a2be2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 6px;
+        letter-spacing: 2px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #555;
+        font-size: 15px;
+        margin-bottom: 16px;
+        font-style: italic;
+    }
+
+    .section {
+        margin-bottom: 14px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    }
+
+    .section h2 {
+        color: #fff;
+        padding: 10px 16px;
+        font-size: 18px;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .section th {
+        background: #f4f4f4;
+        padding: 8px 12px;
+        text-align: left;
+        font-size: 14px;
+        color: #333;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .section td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #eee;
+        vertical-align: top;
+        line-height: 1.4;
+    }
+
+    .section tr:last-child td { border-bottom: none; }
+
+    .section td:first-child {
+        font-family: 'Consolas', monospace;
+        font-weight: bold;
+        color: #8a2be2;
+        width: 22%;
+        font-size: 14px;
+    }
+
+    .section td:last-child {
+        font-family: 'Consolas', monospace;
+        font-size: 13px;
+        color: #001f5c;
+        background: #f9f9ff;
+        width: 38%;
+    }
+
+    /* Цвета заголовков секций */
+    .s1 h2 { background: linear-gradient(90deg, #ff6b6b, #ee5a6f); }
+    .s2 h2 { background: linear-gradient(90deg, #43e97b, #38f9d7); color: #004d40; }
+    .s3 h2 { background: linear-gradient(90deg, #a18cd1, #fbc2eb); color: #3a1078; }
+    .s4 h2 { background: linear-gradient(90deg, #30cfd0, #330867); }
+    .s5 h2 { background: linear-gradient(90deg, #ffa94d, #ff7e5f); }
+
+    .top8 {
+        background: linear-gradient(135deg, #001f5c, #2adede);
+        color: #fff;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-top: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .top8 h3 {
+        font-size: 19px;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .top8-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px 16px;
+        font-size: 14px;
+    }
+
+    .top8-list span {
+        background: rgba(255,255,255,0.15);
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-family: 'Consolas', monospace;
+    }
+
+    .footer {
+        margin-top: 14px;
+        text-align: center;
+        font-size: 13px;
+        color: #666;
+        border-top: 2px dashed #ccc;
+        padding-top: 8px;
+    }
+
+    @media print {
+        body { background: #fff; padding: 0; }
+        .page { box-shadow: none; width: 100%; }
+    }
+</style>
+</head>
+<body>
+<div class="page">
+    <h1>✨ ШПАРГАЛКА ПО CSS — ЧАСТЬ 2 ✨</h1>
+    <p class="subtitle">Дополнительные свойства для уверенной вёрстки</p>
+
+    <!-- 🔥 Критически важные -->
+    <div class="section s1">
+        <h2>🔥 Критически важные</h2>
+        <table>
+            <tr><th>Свойство</th><th>Зачем</th><th>Пример</th></tr>
+            <tr><td>display</td><td>Как элемент ведёт себя: блок, строка, flex, grid</td><td>display: flex;</td></tr>
+            <tr><td>position</td><td>Позиционирование элемента на странице</td><td>position: fixed;</td></tr>
+            <tr><td>overflow</td><td>Что делать, если содержимое не влезает</td><td>overflow: hidden;</td></tr>
+            <tr><td>box-sizing</td><td>Как считать ширину: с padding или без</td><td>box-sizing: border-box;</td></tr>
+            <tr><td>line-height</td><td>Межстрочный интервал (читаемость текста)</td><td>line-height: 1.6;</td></tr>
+        </table>
+    </div>
+
+    <!-- 📦 Flexbox -->
+    <div class="section s2">
+        <h2>📦 Flexbox</h2>
+        <table>
+            <tr><th>Свойство</th><th>Зачем</th><th>Пример</th></tr>
+            <tr><td>justify-content</td><td>Выравнивание по главной оси</td><td>justify-content: center;</td></tr>
+            <tr><td>align-items</td><td>Выравнивание по поперечной оси</td><td>align-items: center;</td></tr>
+            <tr><td>flex-direction</td><td>Направление flex-элементов</td><td>flex-direction: column;</td></tr>
+            <tr><td>gap</td><td>Расстояние между flex/grid-элементами</td><td>gap: 16px;</td></tr>
+        </table>
+    </div>
+
+    <!-- 🎨 Визуальные эффекты -->
+    <div class="section s3">
+        <h2>🎨 Визуальные эффекты</h2>
+        <table>
+            <tr><th>Свойство</th><th>Зачем</th><th>Пример</th></tr>
+            <tr><td>box-shadow</td><td>Тень вокруг блока</td><td>box-shadow: 0 4px 12px rgba(0,0,0,0.2);</td></tr>
+            <tr><td>opacity</td><td>Прозрачность элемента</td><td>opacity: 0.7;</td></tr>
+            <tr><td>background-image</td><td>Фоновая картинка или градиент</td><td>background: linear-gradient(...);</td></tr>
+            <tr><td>object-fit</td><td>Как картинка вписывается в рамку</td><td>object-fit: cover;</td></tr>
+        </table>
+    </div>
+
+    <!-- ⚡ Интерактивность -->
+    <div class="section s4">
+        <h2>⚡ Интерактивность и анимации</h2>
+        <table>
+            <tr><th>Свойство</th><th>Зачем</th><th>Пример</th></tr>
+            <tr><td>transition</td><td>Плавный переход при наведении</td><td>transition: all 0.3s ease;</td></tr>
+            <tr><td>transform</td><td>Поворот, масштаб, сдвиг</td><td>transform: scale(1.1);</td></tr>
+            <tr><td>cursor</td><td>Вид курсора мыши</td><td>cursor: pointer;</td></tr>
+            <tr><td>z-index</td><td>Какой элемент сверху</td><td>z-index: 10;</td></tr>
+        </table>
+    </div>
+
+    <!-- 📱 Адаптивность -->
+    <div class="section s5">
+        <h2>📱 Адаптивность</h2>
+        <table>
+            <tr><th>Свойство</th><th>Зачем</th><th>Пример</th></tr>
+            <tr><td>max-width</td><td>Ограничение ширины (резиновая вёрстка)</td><td>max-width: 1200px;</td></tr>
+            <tr><td>min-height</td><td>Минимальная высота</td><td>min-height: 100vh;</td></tr>
+        </table>
+    </div>
+
+    <!-- 💡 Топ-8 -->
+    <div class="top8">
+        <h3>💡 ТОП-8 СВОЙСТВ, С КОТОРЫХ СТОИТ НАЧАТЬ</h3>
+        <div class="top8-list">
+            <span>1. display: flex</span>
+            <span>2. position</span>
+            <span>3. justify-content</span>
+            <span>4. align-items</span>
+            <span>5. gap</span>
+            <span>6. box-shadow</span>
+            <span>7. transition</span>
+            <span>8. cursor</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        📖 Часть 1 + Часть 2 = полная шпаргалка начинающего верстальщика. Удачи в учёбе! 🚀
+    </div>
+</div>
+</body>
+</html>

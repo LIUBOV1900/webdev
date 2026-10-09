@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Введение в веб-разработку — презентация</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dur:.7s;
+    --bg1:#101228;
+    --bg2:#251a4a;
+    --paper:#fffdf7;
+    --paper2:#f6efe1;
+    --ink:#1d1f38;
+    --ink-soft:#4c4f6a;
+    --accent:#ff5a4e;
+    --accent2:#14b8a6;
+    --blue:#4361ee;
+    --yellow:#ffcd42;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:'Manrope',system-ui,sans-serif;
+    background:linear-gradient(160deg,var(--bg2),var(--bg1) 70%);
+    color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    overflow:hidden;padding:20px;
+  }
+
+  /* ===== живой фон ===== */
+  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+  .bg::after{content:"";position:absolute;inset:0;
+    background-image:radial-gradient(rgba(255,255,255,.06) 1.2px,transparent 1.2px);
+    background-size:28px 28px}
+  .blob{position:absolute;border-radius:50%;filter:blur(85px);opacity:.5}
+  .b1{width:520px;height:520px;background:#ff5a4e;top:-160px;left:-140px;animation:drift 16s ease-in-out infinite alternate}
+  .b2{width:640px;height:640px;background:#4361ee;bottom:-220px;right:-160px;animation:drift 21s ease-in-out infinite alternate-reverse}
+  .b3{width:420px;height:420px;background:#14b8a6;top:42%;left:56%;opacity:.3;animation:drift 14s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate(70px,45px) scale(1.12)}}
+
+  /* ===== верхняя панель ===== */
+  .topbar{width:min(1000px,95vw);display:flex;align-items:center;gap:16px;margin-bottom:14px}
+  .brand{font-family:'Unbounded';font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:#fff;white-space:nowrap;text-shadow:0 2px 14px rgba(255,90,78,.45)}
+  .progress{flex:1;height:6px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--yellow),var(--accent2));border-radius:99px;transition:width .4s ease}
+  .counter{font-variant-numeric:tabular-nums;font-size:14px;font-weight:700;min-width:60px;text-align:right;color:#fff}
+
+  /* ===== книга ===== */
+  .book{width:min(1000px,95vw);height:min(680px,calc(100vh - 180px));position:relative;perspective:1800px}
+  .slide{
+    position:absolute;inset:0;display:none;flex-direction:column;
+    background:
+      radial-gradient(460px 280px at 108% -10%, rgba(67,97,238,.14), transparent 62%),
+      radial-gradient(420px 260px at -8% 110%, rgba(255,90,78,.12), transparent 62%),
+      linear-gradient(105deg,var(--paper2) 0%,var(--paper) 12%,var(--paper) 100%);
+    border-radius:6px 20px 20px 6px;
+    box-shadow:0 34px 70px -20px rgba(0,0,0,.6), 0 2px 0 rgba(255,255,255,.5) inset;
+    transform-origin:left center;backface-visibility:hidden;
+    transition:transform var(--dur) cubic-bezier(.5,.05,.28,.99);
+    overflow:hidden;
+    padding:clamp(24px,4.2vw,50px) clamp(24px,4.8vw,58px);
+  }
+  .slide::before{content:"";position:absolute;left:0;top:0;bottom:0;width:26px;
+    background:linear-gradient(90deg,rgba(0,0,0,.20),rgba(0,0,0,.05) 55%,rgba(0,0,0,0));pointer-events:none}
+  .pagenum{position:absolute;bottom:14px;right:24px;font-size:13px;color:var(--ink-soft);font-weight:700}
+
+  /* появление контента */
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  .slide .content>*,.cover>*:not(.chip){animation:rise .55s cubic-bezier(.2,.7,.3,1) both}
+  .slide .content>*:nth-child(1),.cover>*:nth-child(1){animation-delay:.08s}
+  .slide .content>*:nth-child(2),.cover>*:nth-child(2){animation-delay:.16s}
+  .slide .content>*:nth-child(3),.cover>*:nth-child(3){animation-delay:.24s}
+  .slide .content>*:nth-child(4),.cover>*:nth-child(4){animation-delay:.32s}
+  .slide .content>*:nth-child(5),.cover>*:nth-child(5){animation-delay:.40s}
+  .slide .content>*:nth-child(6),.cover>*:nth-child(6){animation-delay:.48s}
+
+  /* ===== типографика ===== */
+  .eyebrow{font-family:'Unbounded';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:28px;height:3px;background:linear-gradient(90deg,var(--accent),var(--yellow));border-radius:3px}
+  h1{font-family:'Unbounded';font-weight:900;line-height:1.04}
+  h2{font-family:'Unbounded';font-weight:700;font-size:clamp(23px,3.5vw,37px);line-height:1.12;margin-bottom:clamp(14px,2.4vh,24px)}
+  p.lead{font-size:clamp(16.5px,2.15vw,21px);line-height:1.55;color:var(--ink-soft);max-width:64ch;font-weight:500}
+  p.lead b{color:var(--ink)}
+  .content{flex:1;display:flex;flex-direction:column;min-height:0}
+
+  /* маркерные выделения */
+  .hl{background:linear-gradient(transparent 56%,rgba(255,205,66,.9) 56%);padding:0 3px;border-radius:2px;color:var(--ink)}
+  .hl-t{background:linear-gradient(transparent 56%,rgba(20,184,166,.45) 56%);padding:0 3px;color:var(--ink)}
+  .hl-b{background:linear-gradient(transparent 56%,rgba(67,97,238,.35) 56%);padding:0 3px;color:var(--ink)}
+
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  .card{background:#fff;border:1.5px solid #eee3d4;border-radius:18px;padding:18px 20px;
+    box-shadow:0 10px 26px -16px rgba(29,31,56,.4);transition:transform .25s}
+  .card:hover{transform:translateY(-3px)}
+  .card h3{font-size:clamp(16px,2vw,19px);font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:9px}
+  .card p{font-size:clamp(15px,1.9vw,18px);line-height:1.55;color:var(--ink-soft);font-weight:500}
+  .tint-b{background:linear-gradient(135deg,#eef1ff,#fff 65%);border-color:#dbe4ff}
+  .tint-a{background:linear-gradient(135deg,#fff0ee,#fff 65%);border-color:#ffdfdb}
+  .tint-t{background:linear-gradient(135deg,#e7faf6,#fff 65%);border-color:#c9f1e9}
+  .dot{width:11px;height:11px;border-radius:50%;flex:none}
+
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:12px}
+  ul.clean li{position:relative;padding-left:30px;font-size:clamp(16.5px,2.1vw,20px);line-height:1.5;color:var(--ink);font-weight:600}
+  ul.clean li::before{content:"";position:absolute;left:0;top:9px;width:11px;height:11px;border-radius:4px;background:linear-gradient(135deg,var(--accent),var(--yellow));transform:rotate(45deg)}
+  ul.clean li b{color:var(--blue)}
+
+  pre.code{background:#191c30;color:#eef0ff;border-radius:14px;padding:16px 20px;
+    font-family:'JetBrains Mono',Consolas,monospace;font-size:clamp(13px,1.75vw,16px);line-height:1.6;overflow:auto;
+    border:1px solid #2c3050;box-shadow:0 12px 28px -16px rgba(0,0,0,.5)}
+  pre.code .tag{color:#7ee0d2}pre.code .attr{color:#ffb86b}pre.code .str{color:#a5d6a7}pre.code .cmt{color:#8a8fb5;font-style:italic}
+  code.inline{background:#f3ead8;color:#c03a2b;padding:2px 8px;border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:.9em;font-weight:700}
+
+  /* титульный */
+  .cover{justify-content:center}
+  .cover .kicker{font-family:'Unbounded';font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:20px;font-weight:700}
+  .cover h1{font-size:clamp(32px,5.6vw,62px);margin-bottom:22px}
+  .cover h1 em{font-style:normal;background:linear-gradient(92deg,var(--accent),#ff9f2e);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cover .tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .pill{font-size:14px;font-weight:800;padding:9px 16px;border-radius:99px;background:#fff;border:1.5px solid #eadfc9;color:var(--ink);box-shadow:0 6px 16px -10px rgba(29,31,56,.4)}
+  .pill.a{background:linear-gradient(92deg,var(--accent),#ff8a3a);color:#fff;border-color:transparent}
+  .pill.b{background:linear-gradient(92deg,var(--blue),#7aa5ff);color:#fff;border-color:transparent}
+  .pill.t{background:linear-gradient(92deg,var(--accent2),#5eead4);color:#06332e;border-color:transparent}
+  .chip{position:absolute;display:grid;place-items:center;width:66px;height:66px;border-radius:20px;background:#fff;
+    box-shadow:0 16px 34px -14px rgba(29,31,56,.5);font-size:30px;animation:bob 6s ease-in-out infinite}
+  .chip.c1{top:13%;right:10%;transform:rotate(9deg)}
+  .chip.c2{bottom:16%;right:24%;animation-delay:1.2s;background:linear-gradient(135deg,var(--accent),#ff9f2e);color:#fff;font-family:'Unbounded';font-size:19px;font-weight:900}
+  .chip.c3{top:24%;right:31%;animation-delay:.6s;background:linear-gradient(135deg,var(--blue),#7aa5ff)}
+  @keyframes bob{50%{translate:0 -14px}}
+
+  /* шаги */
+  .steps{display:flex;flex-direction:column;gap:10px;counter-reset:s}
+  .step{display:flex;gap:15px;align-items:flex-start;background:#fff;border:1.5px solid #eee3d4;border-radius:14px;padding:11px 18px;box-shadow:0 8px 20px -14px rgba(29,31,56,.4)}
+  .step i{counter-increment:s;font-style:normal;font-family:'Unbounded';font-weight:700;font-size:15px;color:#fff;
+    background:linear-gradient(135deg,var(--blue),#7aa5ff);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 6px 14px -6px rgba(67,97,238,.7)}
+  .step p{font-size:clamp(15px,1.95vw,18.5px);line-height:1.5;color:var(--ink);font-weight:600}
+  .step p b{color:var(--blue)}
+
+  /* ===== СХЕМЫ ===== */
+  .flow{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:0;padding:8px 0}
+  .node{background:#fff;border:2.5px solid var(--blue);border-radius:18px;padding:16px 18px;text-align:center;
+    display:flex;flex-direction:column;gap:3px;align-items:center;box-shadow:0 14px 30px -16px rgba(67,97,238,.55)}
+  .node .ico{font-size:34px;line-height:1}
+  .node .t{font-weight:800;font-size:clamp(14px,1.8vw,17px)}
+  .node .s{font-size:12.5px;color:var(--ink-soft);line-height:1.35;font-weight:600}
+  .node.app{border-color:var(--accent);box-shadow:0 14px 30px -16px rgba(255,90,78,.55)}
+  .node.db{border-color:var(--accent2);box-shadow:0 14px 30px -16px rgba(20,184,166,.55)}
+  .exchange{flex:1;display:flex;flex-direction:column;gap:32px;padding:0 4px;min-width:84px;max-width:185px}
+  .exchange.wide{max-width:380px}
+  .arr{position:relative;height:3px;border-radius:2px}
+  .arr span{position:absolute;left:50%;transform:translateX(-50%);font-size:12.5px;font-weight:800;white-space:nowrap;top:-21px;color:var(--blue)}
+  .arr.right{background:var(--blue)}
+  .arr.right::after{content:"";position:absolute;right:-2px;top:50%;translate:0 -50%;
+    border-left:10px solid var(--blue);border-top:6px solid transparent;border-bottom:6px solid transparent}
+  .arr.left{background:var(--accent)}
+  .arr.left span{top:auto;bottom:-21px;color:var(--accent)}
+  .arr.left::before{content:"";position:absolute;left:-2px;top:50%;translate:0 -50%;
+    border-right:10px solid var(--accent);border-top:6px solid transparent;border-bottom:6px solid transparent}
+  .scheme-note{margin-top:6px;text-align:center;font-size:clamp(14.5px,1.85vw,17.5px);color:var(--ink-soft);font-weight:600}
+  .scheme-note b{color:var(--ink)}
+
+  /* таблица тегов */
+  .taggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+  .tg{background:#fff;border:1.5px solid #eee3d4;border-radius:13px;padding:11px 14px;display:flex;flex-direction:column;gap:3px}
+  .tg code{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--blue);font-size:15px}
+  .tg span{font-size:13.5px;color:var(--ink-soft);line-height:1.4;font-weight:600}
+
+  .kv{display:flex;gap:14px;align-items:baseline;background:#fff;border-left:5px solid var(--accent2);border-radius:12px;padding:12px 18px;margin-bottom:10px;box-shadow:0 8px 20px -14px rgba(29,31,56,.4)}
+  .kv code{font-family:'JetBrains Mono',monospace;font-weight:700;color:#0f766e;font-size:16.5px;min-width:158px}
+  .kv span{font-size:clamp(15px,1.9vw,18px);color:var(--ink-soft);font-weight:600}
+
+  .finale .big{font-family:'Unbounded';font-weight:900;font-size:clamp(25px,4vw,44px);line-height:1.1;margin-bottom:16px}
+  .finale .big span{background:linear-gradient(92deg,var(--accent2),#5eead4);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* ===== навигация ===== */
+  .nav{width:min(1000px,95vw);display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+  .btn{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+    background:linear-gradient(92deg,var(--accent),#ff8a3a);border:none;color:#fff;
+    padding:13px 24px;border-radius:99px;font-family:'Manrope';font-weight:800;font-size:15px;
+    box-shadow:0 12px 26px -12px rgba(255,90,78,.7);transition:.2s}
+  .btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 16px 32px -12px rgba(255,90,78,.85)}
+  .btn:disabled{opacity:.3;cursor:default;box-shadow:none}
+  .hint{color:#aab0d8;font-size:13px;font-weight:600}
+  @media(max-width:720px){
+    .hint{display:none}.g2{grid-template-columns:1fr}
+    .node{padding:8px}.node .ico{font-size:20px}.node .t{font-size:10.5px}.node .s{display:none}
+    .arr span{font-size:9px}.exchange{min-width:46px;gap:24px}.chip{display:none}
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <div class="topbar">
+    <span class="brand">Введение в веб-разработку</span>
+    <div class="progress"><i id="bar"></i></div>
+    <span class="counter" id="counter">1 / 22</span>
+  </div>
+
+  <div class="book" id="book">
+
+    <!-- 1 -->
+    <section class="slide cover">
+      <span class="chip c1">🌐</span><span class="chip c2">&lt;/&gt;</span><span class="chip c3">🎨</span>
+      <div class="kicker">Модуль 5 · Урок 1</div>
+      <h1>Введение<br>в <em>веб-разработку</em></h1>
+      <p class="lead" style="margin-bottom:26px">Как превратить свою идею в цифровой продукт, которым сможет пользоваться кто угодно.</p>
+      <div class="tags">
+        <span class="pill a">HTML</span>
+        <span class="pill t">Интернет</span>
+        <span class="pill b">Клиент · Сервер</span>
+      </div>
+      <span class="pagenum">01</span>
+    </section>
+
+    <!-- 2. НОВОЕ: обсуждение привычных сервисов -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Обсуждение</div>
+        <h2>Технологии вокруг нас</h2>
+        <p class="lead" style="margin-bottom:16px">Каждый день мы открываем десятки сервисов. Присмотритесь к ним: <b>что у них общего?</b></p>
+        <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:12px;flex:1">
+          <div class="card tint-b"><h3>📱 ВКонтакте</h3><p>социальная сеть</p></div>
+          <div class="card tint-a"><h3>▶️ YouTube</h3><p>видео</p></div>
+          <div class="card tint-t"><h3>✈️ Telegram Web</h3><p>мессенджер</p></div>
+          <div class="card tint-t"><h3>🛒 Wildberries</h3><p>интернет-магазин</p></div>
+          <div class="card tint-b"><h3>🎬 Кинопоиск</h3><p>фильмы и сериалы</p></div>
+          <div class="card tint-a"><h3>🏛️ Госуслуги</h3><p>документы</p></div>
+        </div>
+        <p class="lead" style="margin-top:14px">Ответ: все они — <span class="hl">сайты</span> и <span class="hl">веб-приложения</span>, которые открываются прямо в браузере.</p>
+      </div>
+      <span class="pagenum">02</span>
+    </section>
+
+    <!-- 3. НОВОЕ: проблема идеи без интерфейса -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Проблема</div>
+        <h2>У тебя есть идея. Что дальше?</h2>
+        <p class="lead" style="margin-bottom:16px">Представь, что ты придумал свой сервис: например, <b>подбор фильма на вечер</b> или <b>дневник домашних заданий</b>. Код написан и работает, но...</p>
+        <div class="grid g2">
+          <div class="card tint-a"><h3>🖱️ Где пользователю нажимать?</h3><p>Нужно простое и понятное место, чтобы ввести данные и нажать кнопки.</p></div>
+          <div class="card tint-b"><h3>👀 Где увидеть результат?</h3><p>Ответ нужно красиво показать, а не спрятать внутри программы.</p></div>
+        </div>
+        <p class="lead" style="margin-top:18px"><b class="hl">Без удобного интерфейса идея так и останется просто кодом на твоём компьютере.</b></p>
+      </div>
+      <span class="pagenum">03</span>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Решение</div>
+        <h2>Роль веб-разработки</h2>
+        <p class="lead" style="margin-bottom:18px">Удобным интерфейсом чаще всего становится <span class="hl">веб-сайт</span> или <span class="hl">веб-приложение</span> — именно через веб люди взаимодействуют с современными сервисами.</p>
+        <div class="card tint-t">
+          <h3>🚀 Почему веб?</h3>
+          <p>Это один из самых доступных способов создать собственный цифровой продукт и стартап — с <b>низким порогом вхождения</b>.</p>
+        </div>
+      </div>
+      <span class="pagenum">04</span>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Профессия</div>
+        <h2>Два направления веб-разработки</h2>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-b">
+            <h3>💻 Фронтенд</h3>
+            <p>Клиентская сторона — то, с чем пользователь взаимодействует через браузер: динамические интерфейсы, меню, обработка действий, обмен данными с сервером.</p>
+          </div>
+          <div class="card tint-a">
+            <h3>🗄️ Бэкенд</h3>
+            <p>Серверная часть, невидимая пользователю: авторизация, хранение и обработка данных.</p>
+          </div>
+        </div>
+        <p class="lead" style="margin-top:16px">В мире более <b>11 млн</b> веб-разработчиков, но больше половины компаний всё равно ощущают нехватку кадров.</p>
+      </div>
+      <span class="pagenum">05</span>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Стандарт веб-разработки</div>
+        <h2>Комплекс знаний разработчика</h2>
+        <div class="grid" style="gap:13px;flex:1">
+          <div class="card tint-a"><h3><span class="dot" style="background:var(--accent)"></span>HTML + CSS</h3><p>Основа создания сайтов: структура и оформление страниц.</p></div>
+          <div class="card tint-b"><h3><span class="dot" style="background:var(--blue)"></span>JavaScript / Python</h3><p>Языки программирования, которые делают сайт «живым».</p></div>
+          <div class="card tint-t"><h3><span class="dot" style="background:var(--accent2)"></span>SQL</h3><p>Инструмент для работы с базами данных и получения нужной информации.</p></div>
+        </div>
+      </div>
+      <span class="pagenum">06</span>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема · Принципы работы интернета</div>
+        <h2>Что такое Интернет?</h2>
+        <p class="lead" style="margin-bottom:20px"><b>Интернет</b> — это <span class="hl-b">глобальная компьютерная сеть</span>, предназначенная для <b>хранения, обработки и передачи</b> информации.</p>
+        <div class="card tint-b">
+          <p>В 2021 году пользователями сети были почти <b style="color:var(--blue);font-size:1.25em">60%</b> населения Земли — профессии, связанные с наполнением сети контентом, востребованы как никогда.</p>
+        </div>
+      </div>
+      <span class="pagenum">07</span>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Соединения в интернете</div>
+        <h2>Клиент и сервер</h2>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-b">
+            <h3>🖥️ Сервер</h3>
+            <p>Выделенный компьютер, всегда подключённый к Интернету. <b>Содержит информацию</b> и предоставляет контент. Обычно не хранит данные клиентов.</p>
+          </div>
+          <div class="card tint-a">
+            <h3>💻 Клиент</h3>
+            <p><b>Желает получить</b> информацию: отправляет запрос серверу и отображает результат пользователю.</p>
+          </div>
+        </div>
+      </div>
+      <span class="pagenum">08</span>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Соединения в интернете</div>
+        <h2>IP-адрес</h2>
+        <p class="lead" style="margin-bottom:18px">Каждый компьютер в сети получает <span class="hl">уникальный IP-адрес</span>, чтобы его можно было распознать.</p>
+        <div class="kv"><code>IPv4 · 4 байта</code><span>четыре числа от 0 до 255 → <b>91.198.174.192</b></span></div>
+        <div class="kv"><code>IPv6 · 16 байт</code><span><b>1050:0:0:0:5:600:300c:326b</b></span></div>
+      </div>
+      <span class="pagenum">09</span>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Соединения в интернете</div>
+        <h2>Домены и URL</h2>
+        <p class="lead" style="margin-bottom:14px"><b>Домены</b> — понятный человеку способ ориентироваться в сети: <code class="inline">91.198.174.192</code> и <code class="inline">wikipedia.org</code> ведут на один сайт.</p>
+        <p class="lead" style="margin-bottom:14px"><span class="hl-b">URL</span> (Uniform Resource Locator) — полный адрес страницы: протокол + домен + путь.</p>
+        <pre class="code"><span class="cmt">https://</span><span class="tag">en.wikipedia.org</span><span class="str">/wiki/Main_Page</span>
+<span class="cmt">└ протокол  └─── домен ──┘ └──── путь ────┘</span></pre>
+      </div>
+      <span class="pagenum">10</span>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Соединения в интернете</div>
+        <h2>Протоколы</h2>
+        <p class="lead" style="margin-bottom:16px"><b>Протоколы</b> — системы правил, по которым компьютеры обмениваются данными.</p>
+        <div class="grid g2">
+          <div class="kv" style="margin:0"><code>FTP</code><span>передача файлов</span></div>
+          <div class="kv" style="margin:0"><code>SMTP</code><span>отправка писем</span></div>
+          <div class="kv" style="margin:0"><code>IMAP</code><span>получение писем</span></div>
+          <div class="kv" style="margin:0;border-left-color:var(--accent)"><code>HTTP / HTTPS</code><span>обмен HTML-документами</span></div>
+        </div>
+      </div>
+      <span class="pagenum">11</span>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Типы сайтов</div>
+        <h2>Статический сайт</h2>
+        <p class="lead" style="margin-bottom:14px">Возвращает <span class="hl">один и тот же документ</span> с сервера при каждом запросе.</p>
+        <div class="steps">
+          <div class="step"><i></i><p>Браузер отправляет <b>HTTP-запрос</b> с указанием URL страницы.</p></div>
+          <div class="step"><i></i><p>Сервер извлекает документ из своей файловой системы.</p></div>
+          <div class="step"><i></i><p>Сервер возвращает документ и код состояния: <b>«200 OK»</b> — успех, или <b>«404 Not Found»</b> — файл отсутствует.</p></div>
+        </div>
+      </div>
+      <span class="pagenum">12</span>
+    </section>
+
+    <!-- 13 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Типы сайтов</div>
+        <h2>Схема работы статического сайта</h2>
+        <div class="flow">
+          <div class="node"><span class="ico">💻</span><span class="t">Браузер</span><span class="s">клиент</span></div>
+          <div class="exchange wide">
+            <div class="arr right"><span>1. HTTP-запрос (URL страницы)</span></div>
+            <div class="arr left"><span>3. HTTP-ответ: документ + «200 OK» / «404 Not Found»</span></div>
+          </div>
+          <div class="node"><span class="ico">🗄️</span><span class="t">Сервер</span><span class="s">2. извлекает файл<br>из файловой системы</span></div>
+        </div>
+        <p class="scheme-note">Файл <b>не сохраняется</b> на компьютере клиента — он отображается временно, поэтому пользователь всегда видит <b>последнюю версию</b> страницы.</p>
+      </div>
+      <span class="pagenum">13</span>
+    </section>
+
+    <!-- 14 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Типы сайтов</div>
+        <h2>Динамический сайт</h2>
+        <p class="lead" style="margin-bottom:12px">Генерирует контент на основе запроса и данных: имя пользователя, число <b>его</b> непрочитанных писем. Появляются <span class="hl-t">веб-приложение</span> и <span class="hl-t">база данных</span>.</p>
+        <div class="steps">
+          <div class="step"><i></i><p>Браузер → HTTP-запрос на сервер (URL + дата).</p></div>
+          <div class="step"><i></i><p>Сервер видит «динамический» запрос → передаёт в <b>веб-приложение</b>.</p></div>
+          <div class="step"><i></i><p>Веб-приложение запрашивает данные из <b>базы данных</b>.</p></div>
+          <div class="step"><i></i><p>Данные помещаются в <b>HTML-шаблон</b> → страница создаётся динамически.</p></div>
+          <div class="step"><i></i><p>Готовый документ возвращается в браузер и отображается.</p></div>
+        </div>
+      </div>
+      <span class="pagenum">14</span>
+    </section>
+
+    <!-- 15 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Типы сайтов</div>
+        <h2>Схема работы динамического сайта</h2>
+        <div class="flow">
+          <div class="node"><span class="ico">💻</span><span class="t">Браузер</span></div>
+          <div class="exchange">
+            <div class="arr right"><span>1. HTTP-запрос</span></div>
+            <div class="arr left"><span>6. готовая страница</span></div>
+          </div>
+          <div class="node"><span class="ico">🖥️</span><span class="t">Сервер</span></div>
+          <div class="exchange">
+            <div class="arr right"><span>2. запрос</span></div>
+            <div class="arr left"><span>5. документ</span></div>
+          </div>
+          <div class="node app"><span class="ico">⚙️</span><span class="t">Веб-приложение</span><span class="s">Python +<br>HTML-шаблон</span></div>
+          <div class="exchange">
+            <div class="arr right"><span>3. запрос данных</span></div>
+            <div class="arr left"><span>4. данные</span></div>
+          </div>
+          <div class="node db"><span class="ico">🗃️</span><span class="t">База данных</span><span class="s">имя, письма…</span></div>
+        </div>
+        <p class="scheme-note">Синие стрелки — запросы <b>(→)</b>, красные — ответы <b>(←)</b>. Страница собирается динамически из данных базы.</p>
+      </div>
+      <span class="pagenum">15</span>
+    </section>
+
+    <!-- 16 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема · HTML</div>
+        <h2>Что такое HTML?</h2>
+        <p class="lead" style="margin-bottom:18px"><b>HTML</b> (HyperText Markup Language — язык разметки гипертекста) — это <span class="hl">язык создания веб-страниц</span>. Браузер интерпретирует HTML-код и отображает страницу.</p>
+        <pre class="code">&lt;<span class="tag">p</span>&gt;Если Тетрис и научил меня чему-то, так это тому, что
+&lt;<span class="tag">b</span>&gt;ошибки накапливаются&lt;/<span class="tag">b</span>&gt;, а &lt;<span class="tag">i</span>&gt;достижения исчезают&lt;/<span class="tag">i</span>&gt;.&lt;/<span class="tag">p</span>&gt;</pre>
+        <p class="lead" style="margin-top:14px">Результат: <em>«ошибки накапливаются»</em> и <em>«достижения исчезают»</em> отображаются с выделением.</p>
+      </div>
+      <span class="pagenum">16</span>
+    </section>
+
+    <!-- 17 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">HTML</div>
+        <h2>Синтаксис HTML</h2>
+        <ul class="clean" style="margin-bottom:16px">
+          <li><b>Теги</b> в угловых скобках <code class="inline">&lt; &gt;</code> определяют границы оформляемого текста. Браузер их не показывает.</li>
+          <li>Парные теги: <b>открывающий</b> <code class="inline">&lt;p&gt;</code> и <b>закрывающий</b> <code class="inline">&lt;/p&gt;</code>. Вместе с содержимым — <b>элемент HTML</b>.</li>
+          <li><b>Атрибуты</b> дают дополнительную информацию о теге.</li>
+        </ul>
+        <pre class="code">&lt;<span class="tag">a</span> <span class="attr">href</span>=<span class="str">"https://ru.wikipedia.org/wiki/HTML"</span>&gt;Что такое HTML?&lt;/<span class="tag">a</span>&gt;
+&lt;<span class="tag">img</span> <span class="attr">src</span>=<span class="str">"http://placehold.it/50x50"</span>&gt;</pre>
+      </div>
+      <span class="pagenum">17</span>
+    </section>
+
+    <!-- 18 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">HTML</div>
+        <h2>Структура HTML-документа</h2>
+        <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:20px;flex:1;align-items:start">
+          <pre class="code"><span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html&gt;</span>
+  <span class="tag">&lt;head&gt;</span>
+    <span class="tag">&lt;title&gt;</span>Привет, мир!<span class="tag">&lt;/title&gt;</span>
+  <span class="tag">&lt;/head&gt;</span>
+  <span class="tag">&lt;body&gt;</span>
+    <span class="tag">&lt;h1&gt;</span>Привет, мир!<span class="tag">&lt;/h1&gt;</span>
+    <span class="tag">&lt;p&gt;</span>Это веб-страница.<span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span></pre>
+          <ul class="clean">
+            <li><code class="inline">&lt;!DOCTYPE html&gt;</code> — документ написан на HTML.</li>
+            <li><code class="inline">&lt;html&gt;</code> — контейнер всего содержимого.</li>
+            <li><code class="inline">&lt;head&gt;</code> — служебная информация (+ <code class="inline">&lt;title&gt;</code>).</li>
+            <li><code class="inline">&lt;body&gt;</code> — всё, что видно в окне браузера.</li>
+          </ul>
+        </div>
+      </div>
+      <span class="pagenum">18</span>
+    </section>
+
+    <!-- 19 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Элементы HTML</div>
+        <h2>Блочные и строчные элементы</h2>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-b">
+            <h3>🧱 Блочные</h3>
+            <p style="margin-bottom:8px">Делят содержимое страницы на связанные блоки.</p>
+            <p>Заголовки <code class="inline">&lt;h1&gt;–&lt;h6&gt;</code>, абзацы <code class="inline">&lt;p&gt;</code>, списки <code class="inline">&lt;ul&gt;</code> / <code class="inline">&lt;ol&gt;</code>, цитаты <code class="inline">&lt;blockquote&gt;</code>.</p>
+          </div>
+          <div class="card tint-a">
+            <h3>✏️ Строчные</h3>
+            <p style="margin-bottom:8px">Выделяют часть текста и придают ей смысл.</p>
+            <p>Ссылки <code class="inline">&lt;a&gt;</code>, жирный <code class="inline">&lt;b&gt;</code>, курсив <code class="inline">&lt;i&gt;</code>.</p>
+          </div>
+        </div>
+        <p class="lead" style="margin-top:14px">Самозакрывающиеся (только открывающий тег): <code class="inline">&lt;br&gt;</code>, <code class="inline">&lt;hr&gt;</code>, <code class="inline">&lt;img&gt;</code>.</p>
+      </div>
+      <span class="pagenum">19</span>
+    </section>
+
+    <!-- 20 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Элементы HTML</div>
+        <h2>Заголовки и списки</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex:1">
+          <div>
+            <p class="lead" style="margin-bottom:12px">Заголовки — блочные элементы, 6 уровней:</p>
+            <pre class="code"><span class="tag">&lt;h1&gt;</span>Заголовок 1<span class="tag">&lt;/h1&gt;</span>
+<span class="tag">&lt;h2&gt;</span>Заголовок 2<span class="tag">&lt;/h2&gt;</span>
+<span class="cmt">...до...</span>
+<span class="tag">&lt;h6&gt;</span>Заголовок 6<span class="tag">&lt;/h6&gt;</span></pre>
+          </div>
+          <div>
+            <p class="lead" style="margin-bottom:12px">Списки (вкладываются друг в друга):</p>
+            <pre class="code"><span class="cmt">Маркированный:</span>
+<span class="tag">&lt;ul&gt;</span><span class="tag">&lt;li&gt;</span>Пункт<span class="tag">&lt;/li&gt;</span><span class="tag">&lt;/ul&gt;</span>
+<span class="cmt">Нумерованный:</span>
+<span class="tag">&lt;ol&gt;</span><span class="tag">&lt;li&gt;</span>Пункт<span class="tag">&lt;/li&gt;</span><span class="tag">&lt;/ol&gt;</span></pre>
+          </div>
+        </div>
+      </div>
+      <span class="pagenum">20</span>
+    </section>
+
+    <!-- 21 -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Элементы HTML</div>
+        <h2>Выделение текста и порядок тегов</h2>
+        <div class="grid g2" style="margin-bottom:14px">
+          <div class="card tint-a"><h3><code class="inline">&lt;b&gt;</code> и <code class="inline">&lt;i&gt;</code></h3><p>Жирное и курсивное начертание.</p></div>
+          <div class="card tint-b"><h3><code class="inline">&lt;br&gt;</code> и <code class="inline">&lt;hr&gt;</code></h3><p>Перевод строки и горизонтальная линия.</p></div>
+        </div>
+        <p class="lead" style="margin-bottom:10px">Парные теги закрываются <span class="hl">в обратном порядке</span>:</p>
+        <pre class="code"><span class="cmt">Ошибка:</span>   &lt;p&gt;&lt;i&gt;Будьте внимательны!&lt;/p&gt;&lt;/i&gt;
+<span class="cmt">Правильно:</span> &lt;p&gt;&lt;i&gt;Будьте внимательны!&lt;/i&gt;&lt;/p&gt;</pre>
+        <p class="lead" style="margin-top:12px">Комментарии <code class="inline">&lt;!-- … --&gt;</code> игнорируются браузером — они только для людей.</p>
+      </div>
+      <span class="pagenum">21</span>
+    </section>
+
+    <!-- 22 -->
+    <section class="slide finale">
+      <div class="content">
+        <div class="eyebrow">Подведём итог</div>
+        <div class="big">Изученные теги <span>HTML</span></div>
+        <div class="taggrid" style="max-height:48vh;overflow:auto;padding-right:6px">
+          <div class="tg"><code>&lt;!DOCTYPE html&gt;</code><span>тип документа</span></div>
+          <div class="tg"><code>&lt;html&gt;</code><span>контейнер всей страницы</span></div>
+          <div class="tg"><code>&lt;head&gt;</code><span>служебная информация</span></div>
+          <div class="tg"><code>&lt;title&gt;</code><span>заголовок вкладки браузера</span></div>
+          <div class="tg"><code>&lt;body&gt;</code><span>видимое содержимое</span></div>
+          <div class="tg"><code>&lt;h1&gt;–&lt;h6&gt;</code><span>заголовки</span></div>
+          <div class="tg"><code>&lt;p&gt;</code><span>абзац</span></div>
+          <div class="tg"><code>&lt;a&gt;</code><span>ссылка</span></div>
+          <div class="tg"><code>&lt;img&gt;</code><span>изображение</span></div>
+          <div class="tg"><code>&lt;br&gt;</code><span>перевод строки</span></div>
+          <div class="tg"><code>&lt;hr&gt;</code><span>горизонтальная линия</span></div>
+          <div class="tg"><code>&lt;ul&gt; / &lt;ol&gt;</code><span>маркированный / нумерованный список</span></div>
+          <div class="tg"><code>&lt;li&gt;</code><span>элемент списка</span></div>
+          <div class="tg"><code>&lt;b&gt;</code><span>жирный текст</span></div>
+          <div class="tg"><code>&lt;i&gt;</code><span>курсивный текст</span></div>
+          <div class="tg"><code>&lt;blockquote&gt;</code><span>длинная цитата</span></div>
+          <div class="tg"><code>&lt;!-- --&gt;</code><span>комментарий</span></div>
+        </div>
+        <p class="lead" style="margin-top:14px">В следующий раз — современный подход к оформлению веб-страниц: <b class="hl">CSS</b>! 🎨</p>
+      </div>
+      <span class="pagenum">22</span>
+    </section>
+
+  </div>
+
+  <div class="nav">
+    <button class="btn" id="prev">← Назад</button>
+    <span class="hint">Листайте: клавиши ← → · пробел · клик по кнопкам · свайп на телефоне</span>
+    <button class="btn" id="next">Вперёд →</button>
+  </div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  const bar=document.getElementById('bar');
+  const counter=document.getElementById('counter');
+  const prevBtn=document.getElementById('prev');
+  const nextBtn=document.getElementById('next');
+  const DUR=720;
+  let cur=0, busy=false;
+
+  slides.forEach((s,i)=>{
+    s.style.transform='rotateY(0deg)';
+    s.style.display=(i===0)?'flex':'none';
+    s.style.zIndex=(i===0)?2:0;
+  });
+
+  function paint(n){
+    counter.textContent=(n+1)+' / '+total;
+    bar.style.width=(((n+1)/total)*100)+'%';
+    prevBtn.disabled=(n===0);
+    nextBtn.disabled=(n===total-1);
+  }
+
+  function go(n){
+    if(busy||n===cur||n<0||n>=total)return;
+    busy=true;
+    const dir=n>cur?1:-1;
+    const oldS=slides[cur], newS=slides[n];
+    paint(n);
+    newS.style.display='flex';
+
+    if(dir===1){
+      newS.style.zIndex=1; newS.style.transform='rotateY(0deg)';
+      oldS.style.zIndex=2; oldS.style.transform='rotateY(0deg)';
+      void oldS.offsetWidth;
+      oldS.style.transform='rotateY(-95deg)';
+    }else{
+      oldS.style.zIndex=1; oldS.style.transform='rotateY(0deg)';
+      newS.style.zIndex=2; newS.style.transform='rotateY(-95deg)';
+      void newS.offsetWidth;
+      newS.style.transform='rotateY(0deg)';
+    }
+
+    setTimeout(()=>{
+      oldS.style.display='none';
+      oldS.style.transform='rotateY(0deg)';
+      cur=n; busy=false; paint(cur);
+    },DUR);
+  }
+
+  prevBtn.onclick=()=>go(cur-1);
+  nextBtn.onclick=()=>go(cur+1);
+
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(cur+1);}
+    if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(cur-1);}
+    if(e.key==='Home'){e.preventDefault();go(0);}
+    if(e.key==='End'){e.preventDefault();go(total-1);}
+  });
+
+  let sx=null;
+  const book=document.getElementById('book');
+  book.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
+  book.addEventListener('touchend',e=>{
+    if(sx===null)return;
+    const dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>50){ dx<0?go(cur+1):go(cur-1); }
+    sx=null;
+  },{passive:true});
+
+  paint(0);
+})();
+</script>
+</body>
+</html>

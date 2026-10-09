@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL - кавычки</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            flex: 1;
+        }
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #3498db;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        th, td {
+            padding: 6px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #3498db;
+            color: white;
+        }
+        code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 1.2em;
+            display: inline-block;
+            margin: 3px 0;
+        }
+        .example {
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+        .correct { color: #27ae60; }
+        .wrong { color: #e74c3c; }
+        .tip {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+        .examples-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .ex-item {
+            background: #f8f9fa;
+            padding: 6px;
+            border-radius: 4px;
+            border-left: 3px solid #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <h1>📚 SQL кавычки </h1>
+    
+    <div class="container">
+        <div class="card">
+            <h2>Названия полей</h2>
+            <table>
+                <tr>
+                    <th>Тип</th>
+                    <th>Пример</th>
+                    <th>Кавычки</th>
+                </tr>
+                <tr>
+                    <td>Без пробелов</td>
+                    <td><code>name, age</code></td>
+                    <td>Нет</td>
+                </tr>
+                <tr>
+                    <td>С пробелами</td>
+                    <td><code>"Birth Year"</code></td>
+                    <td>Двойные " "</td>
+                </tr>
+            </table>
+            <div class="examples-grid">
+                <div class="ex-item">
+                    <div class="correct">✓ <code>SELECT name, age FROM users</code></div>
+                </div>
+                <div class="ex-item">
+                    <div class="correct">✓ <code>SELECT id, gender FROM artists</code></div>
+                </div>
+                <div class="ex-item">
+                    <div class="correct">✓ <code>SELECT "Birth Year" FROM artists</code></div>
+                </div>
+                <div class="ex-item">
+                    <div class="correct">✓ <code>SELECT "First Name", "Last Name" FROM users</code></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Значения в WHERE</h2>
+            <table>
+                <tr>
+                    <th>Тип</th>
+                    <th>Пример</th>
+                    <th>Кавычки</th>
+                </tr>
+                <tr>
+                    <td>Строка</td>
+                    <td><code>'Female'</code></td>
+                    <td>Одинарные ' '</td>
+                </tr>
+                <tr>
+                    <td>Число</td>
+                    <td><code>1900, 25</code></td>
+                    <td>Нет</td>
+                </tr>
+            </table>
+            <div class="examples-grid">
+                <div class="ex-item">
+                    <div class="correct">✓ <code>WHERE gender = 'Female'</code></div>
+                </div>
+                <div class="ex-item">
+                    <div class="correct">✓ <code>WHERE name = 'Ivan'</code></div>
+                </div>
+                <div class="ex-item">
+                    <div class="correct">✓ <code>WHERE "Birth Year" < 1900</code></div>
+                </div>
+                <div class="ex-item">
+                    <div class="correct">✓ <code>WHERE age >= 25</code></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Частые ошибки</h2>
+            <div class="example">
+                <div class="wrong">✗ <code>WHERE gender == "Female"</code></div>
+                <div class="correct">✓ <code>WHERE gender = 'Female'</code></div>
+                <br>
+                <div class="wrong">✗ <code>SELECT Birth Year FROM artists</code></div>
+                <div class="correct">✓ <code>SELECT "Birth Year" FROM artists</code></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Python + SQLite</h2>
+            <div class="example">
+                <code>cursor.execute("SELECT * FROM artists WHERE gender = 'Female'")</code>
+                <br><br>
+                <code>cursor.execute('SELECT * FROM artists WHERE "Birth Year" < 1900')</code>
+            </div>
+            <div class="tip">
+                💡 <strong>Внешние кавычки</strong> — это кавычки Python для строки<br>
+                💡 <strong>Внутренние кавычки</strong> — это кавычки SQL для значений<br>
+                💡 Они должны быть <strong>разными</strong>, чтобы Python не запутался!
+            </div>
+        </div>
+    </div>
+</body>
+</html>

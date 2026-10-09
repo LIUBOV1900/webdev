@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тренажёр: шаблоны (Flask)</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#101228; --bg2:#251a4a;
+    --paper:#fffdf7; --paper2:#f6efe1;
+    --ink:#1d1f38; --ink-soft:#4c4f6a;
+    --accent:#ff5a4e; --accent2:#14b8a6; --blue:#4361ee; --yellow:#ffcd42;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Manrope',system-ui,sans-serif;background:linear-gradient(160deg,var(--bg2),var(--bg1) 70%);
+    color:var(--ink);overflow:hidden;display:flex;justify-content:center;padding:16px}
+  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+  .bg::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1.2px,transparent 1.2px);background-size:28px 28px}
+  .blob{position:absolute;border-radius:50%;filter:blur(85px);opacity:.5}
+  .b1{width:520px;height:520px;background:#ff5a4e;top:-160px;left:-140px;animation:drift 16s ease-in-out infinite alternate}
+  .b2{width:640px;height:640px;background:#4361ee;bottom:-220px;right:-160px;animation:drift 21s ease-in-out infinite alternate-reverse}
+  .b3{width:420px;height:420px;background:#14b8a6;top:42%;left:56%;opacity:.3;animation:drift 14s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate(70px,45px) scale(1.12)}}
+
+  .app{width:min(1180px,98vw);height:100%;display:flex;flex-direction:column;min-height:0}
+  .top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px;flex:none}
+  .brand{font-family:'Unbounded';font-weight:900;font-size:clamp(16px,2.4vw,24px);color:#fff;text-shadow:0 2px 14px rgba(255,90,78,.45)}
+  .brand em{font-style:normal;background:linear-gradient(92deg,var(--accent),#ff9f2e);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .levels{display:flex;gap:7px;align-items:center;margin-left:auto}
+  .lvl{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);
+    color:#fff;font-weight:800;font-size:13px;cursor:pointer;transition:.2s;display:grid;place-items:center}
+  .lvl:hover{transform:translateY(-2px)}
+  .lvl.cur{border-color:var(--accent);background:linear-gradient(135deg,var(--accent),#ff8a3a);box-shadow:0 8px 18px -8px rgba(255,90,78,.8)}
+  .lvl.done{border-color:var(--accent2);background:linear-gradient(135deg,var(--accent2),#5eead4);color:#06332e}
+  .score{color:#aab0d8;font-weight:700;font-size:13px}
+  .reset{color:#7c81a3;font-size:12px;cursor:pointer;text-decoration:underline;border:none;background:none}
+
+  .main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1.2fr;gap:14px;align-items:stretch}
+
+  .col{height:100%;min-height:0;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column}
+
+  .right{height:100%;min-height:0;display:flex;flex-direction:column}
+  .colscroll{flex:1;min-height:0;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column}
+
+  .card{background:linear-gradient(105deg,var(--paper2) 0%,var(--paper) 12%,var(--paper) 100%);
+    border-radius:16px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);padding:16px 18px;margin-bottom:12px;flex:none}
+  .card.dark{background:#191c30;color:#eef0ff;border:1px solid #2c3050;flex:1;display:flex;flex-direction:column;min-height:0}
+  .eyebrow{font-family:'Unbounded';font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .eyebrow::before{content:"";width:24px;height:3px;background:linear-gradient(90deg,var(--accent),var(--yellow));border-radius:3px}
+  h2{font-family:'Unbounded';font-weight:700;font-size:clamp(16px,2.2vw,22px);line-height:1.15;margin-bottom:8px}
+  .tasktext{font-size:clamp(14px,1.7vw,16.5px);line-height:1.55;color:var(--ink-soft);font-weight:500}
+  .tasktext b{color:var(--ink)}
+  .tasktext code,.hintbox code{background:#f3ead8;color:#c03a2b;padding:1px 7px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.88em;font-weight:700}
+  .multitest{font-size:12.5px;color:#8a6d00;background:#fff6d9;border-radius:8px;padding:5px 11px;margin-top:8px;font-weight:700;display:inline-block}
+
+  .databox{margin-top:10px}
+  .databox h4{font-size:11px;font-family:'Unbounded';letter-spacing:.1em;text-transform:uppercase;color:#8a8fb5;margin-bottom:6px}
+  .databox pre{background:#14162a;border-radius:10px;padding:9px 12px;font-family:'JetBrains Mono',monospace;
+    font-size:clamp(11px,1.4vw,13px);line-height:1.55;overflow:auto;color:#eef0ff;border:1px solid #2c3050;margin-bottom:6px}
+  .databox .fn{color:#82aaff;font-weight:700}.databox .str{color:#a5d6a7}.databox .num{color:#f78c6c}
+  .databox .lbl{color:#8a8fb5;font-style:italic}
+
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .btn{border:none;cursor:pointer;font-family:'Manrope';font-weight:800;font-size:14px;border-radius:99px;padding:10px 20px;transition:.2s;display:inline-flex;align-items:center;gap:8px}
+  .btn:hover:not(:disabled){transform:translateY(-2px)}
+  .btn.b{background:linear-gradient(92deg,#16a34a,#4ade80);color:#fff;box-shadow:0 10px 22px -10px rgba(22,163,74,.6)}
+  .btn.g{background:#fff;color:var(--ink);border:1.5px solid #e5dcc8}
+  .btn.small{padding:8px 14px;font-size:13px}
+  .hintbox{display:none;margin-top:10px;background:#fff6d9;border-left:5px solid var(--yellow);border-radius:10px;padding:10px 14px;
+    font-size:13.5px;line-height:1.5;color:#5b4a00;font-weight:600}
+  .hintbox.show{display:block}
+
+  details.cheat{flex:none;margin-bottom:12px}
+  details.cheat summary{cursor:pointer;color:#fff;font-weight:800;font-size:13px;padding:9px 15px;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.16);border-radius:99px;display:inline-block}
+  .cheatsheet{margin-top:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:12px 16px;color:#cfd2ea;font-size:13px;line-height:1.85}
+  .cheatsheet code{background:rgba(0,0,0,.35);color:#ffd166;padding:2px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.95em}
+
+  .editorhead{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex:none}
+  .editorhead .t{font-family:'Unbounded';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a8fb5;font-weight:700}
+  .editor{width:100%;flex:1;min-height:120px;resize:none;background:#14162a;color:#eef0ff;border:1px solid #2c3050;border-radius:12px;
+    padding:12px 14px;font-family:'JetBrains Mono',Consolas,monospace;font-size:13.5px;line-height:1.6;tab-size:2;outline:none}
+  .editor:focus{border-color:var(--blue)}
+
+  .reslabel{font-family:'Unbounded';font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8a8fb5;font-weight:700;margin:10px 0 6px;flex:none}
+  pre.result{background:#14162a;border-radius:10px;padding:10px 12px;font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;line-height:1.55;overflow:auto;max-height:105px;border:1px solid #2c3050;color:#a5d6a7;white-space:pre-wrap;word-break:break-word;flex:none}
+  pre.result.err{color:#ff8a80}
+  iframe.preview{width:100%;height:110px;border:2px dashed rgba(255,255,255,.25);border-radius:10px;background:#fff;flex:none}
+
+  .fb{border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.5;font-weight:700;margin-top:10px;display:none;flex:none}
+  .fb.show{display:block;animation:pop .35s cubic-bezier(.2,.7,.3,1.4)}
+  .fb.ok{background:#e9faf0;border:1.5px solid #86efac;color:#14532d}
+  .fb.err{background:#fef0ef;border:1.5px solid #fca5a5;color:#7f1d1d}
+  .fb.info{background:#fff6d9;border:1.5px solid #fcd34d;color:#5b4a00}
+  @keyframes pop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+
+  .actions{flex:none;display:flex;gap:10px;margin-top:10px;align-items:center}
+  .actions #nextBtn{margin-left:auto}
+
+  @media(max-width:900px){
+    body{overflow:auto}
+    .app{height:auto;min-height:100%}
+    .main{grid-template-columns:1fr;overflow:visible}
+    .col,.right,.colscroll{height:auto;min-height:0;overflow:visible}
+    .card.dark{min-height:420px}
+    .editor{min-height:180px}
+  }
+</style>
+</head>
+<body>
+<div class="bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+<div class="app">
+  <div class="top">
+    <div class="brand">Тренажёр · <em>Шаблоны</em></div>
+    <div class="levels" id="levels"></div>
+    <span class="score" id="score"></span>
+    <button class="reset" id="reset">сбросить прогресс</button>
+  </div>
+
+  <div class="main">
+    <!-- левая колонка -->
+    <div class="col">
+      <div class="card">
+        <div class="eyebrow" id="taskTag"></div>
+        <h2 id="taskTitle"></h2>
+        <div class="tasktext" id="taskText"></div>
+        <div id="multitest"></div>
+        <div class="databox">
+          <h4>Данные, передаются в шаблон</h4>
+          <div id="dataBlocks"></div>
+        </div>
+        <div class="btnrow">
+          <button class="btn g small" id="hintBtn">💡 Подсказка</button>
+          <button class="btn g small" id="solBtn">📄 Показать решение</button>
+        </div>
+        <div class="hintbox" id="hintBox"></div>
+      </div>
+
+      <details class="cheat">
+        <summary>🗒 Шпаргалка по шаблонам</summary>
+        <div class="cheatsheet">
+          <code>{{ выражение }}</code> — подставить значение в текст.<br>
+          <code>{% if условие %} … {% else %} … {% endif %}</code> — ветвление.<br>
+          <code>{% for x in список %} … {% endfor %}</code> — цикл по списку.<br>
+          <code>{% for id, name in список_пар %}</code> — цикл по парам значений.<br>
+          <code>{% set имя = значение %}</code> — создать переменную.<br>
+          Функции: <code>len()</code>, <code>str()</code>, <code>int()</code>. Условия: <code>==, !=, &lt;, &gt;, and, or, not</code>.
+        </div>
+      </details>
+    </div>
+
+    <!-- правая колонка -->
+    <div class="right">
+      <div class="colscroll">
+        <div class="card dark">
+          <div class="editorhead"><span class="t">✏️ Мой шаблон — результат обновляется автоматически</span></div>
+          <textarea class="editor" id="editor" spellcheck="false" placeholder="Введи сюда код шаблона, например:&#10;&#10;<h1>{{ header }}</h1>"></textarea>
+          <div class="reslabel">Результат обработки (код)</div>
+          <pre class="result" id="resCode">// результат появится здесь…</pre>
+          <div class="reslabel">👁 Как увидит браузер</div>
+          <iframe class="preview" id="preview" sandbox=""></iframe>
+        </div>
+      </div>
+      <div class="fb" id="fb"></div>
+      <div class="actions">
+        <button class="btn g small" id="prevBtn">← Предыдущее</button>
+        <button class="btn b small" id="checkBtn">✔ Проверить задание</button>
+        <button class="btn g small" id="nextBtn">Следующее →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= мини-движок шаблонов ================= */
+function TplError(m){const e=new Error(m);e.tpl=true;return e;}
+function CheckFail(m){const e=new Error(m);return e;}
+
+function tokenizeExpr(src){
+  const toks=[];let i=0;
+  while(i<src.length){
+    const c=src[i];
+    if(/\s/.test(c)){i++;continue;}
+    if(/[0-9]/.test(c)){let j=i;while(j<src.length&&/[0-9.]/.test(src[j]))j++;toks.push({t:'num',v:parseFloat(src.slice(i,j))});i=j;continue;}
+    if(c==='"'||c==="'"){let j=i+1;while(j<src.length&&src[j]!==c)j++;if(j>=src.length)throw TplError('не закрыта кавычка');toks.push({t:'str',v:src.slice(i+1,j)});i=j+1;continue;}
+    if(/[A-Za-z_А-Яа-яЁё]/.test(c)){let j=i;while(j<src.length&&/[\wА-Яа-яЁё]/.test(src[j]))j++;toks.push({t:'name',v:src.slice(i,j)});i=j;continue;}
+    const two=src.slice(i,i+2);
+    if(['==','!=','<=','>='].includes(two)){toks.push({t:'op',v:two});i+=2;continue;}
+    if('+-*/%<>().,'.includes(c)){toks.push({t:'op',v:c});i++;continue;}
+    throw TplError('непонятный символ «'+c+'» в выражении');
+  }
+  return toks;
+}
+
+function toStr(v){
+  if(v===null||v===undefined)return'None';
+  if(v===true)return'True';
+  if(v===false)return'False';
+  if(Array.isArray(v))return'['+v.map(x=>typeof x==='string'?("'"+x+"'"):toStr(x)).join(', ')+']';
+  return String(v);
+}
+function pyTruthy(v){
+  if(v===null||v===undefined||v===false)return false;
+  if(typeof v==='number')return v!==0;
+  if(typeof v==='string')return v.length>0;
+  if(Array.isArray(v))return v.length>0;
+  return true;
+}
+function callFn(name,args){
+  if(name==='len'){const a=args[0];if(typeof a==='string'||Array.isArray(a))return a.length;throw TplError('len() работает со строками и списками');}
+  if(name==='str')return toStr(args[0]);
+  if(name==='int'){const n=parseInt(args[0],10);if(isNaN(n))throw TplError('int() не смог преобразовать значение');return n;}
+  throw TplError('неизвестная функция «'+name+'». Доступны: len(), str(), int()');
+}
+
+function evalExpr(src,ctx){
+  const toks=tokenizeExpr(src);let pos=0;
+  const peek=()=>toks[pos],next=()=>toks[pos++];
+  function lookup(name){
+    if(name in ctx)return ctx[name];
+    throw TplError('неизвестная переменная «'+name+'». Данные, переданные в шаблон, перечислены слева');
+  }
+  function parseOr(){let v=parseAnd();while(peek()&&peek().v==='or'){next();const r=parseAnd();v=pyTruthy(v)||pyTruthy(r);}return v;}
+  function parseAnd(){let v=parseNot();while(peek()&&peek().v==='and'){next();const r=parseNot();v=pyTruthy(v)&&pyTruthy(r);}return v;}
+  function parseNot(){if(peek()&&peek().v==='not'){next();return!pyTruthy(parseNot());}return parseCmp();}
+  function parseCmp(){
+    let v=parseAdd();const op=peek();
+    if(op&&['==','!=','<','>','<=','>='].includes(op.v)){
+      next();const r=parseAdd();
+      switch(op.v){
+        case'==':return v===r;case'!=':return v!==r;
+        case'<':return v<r;case'>':return v>r;
+        case'<=':return v<=r;case'>=':return v>=r;
+      }
+    }
+    return v;
+  }
+  function parseAdd(){
+    let v=parseMul();
+    while(peek()&&(peek().v==='+'||peek().v==='-')){
+      const op=next().v,r=parseMul();
+      if(op==='+'){
+        if(typeof v==='string'||typeof r==='string')v=toStr(v)+toStr(r);
+        else v=v+r;
+      }else v=Number(v)-Number(r);
+    }
+    return v;
+  }
+  function parseMul(){
+    let v=parseUnary();
+    while(peek()&&['*','/','%'].includes(peek().v)){
+      const op=next().v,r=parseUnary();
+      if(op==='*')v=v*r;else if(op==='/')v=v/r;else v=v%r;
+    }
+    return v;
+  }
+  function parseUnary(){if(peek()&&peek().v==='-'){next();return-parseUnary();}return parseAtom();}
+  function parseAtom(){
+    const t=next();
+    if(!t)throw TplError('неожиданный конец выражения');
+    if(t.t==='num')return t.v;
+    if(t.t==='str')return t.v;
+    if(t.t==='name'){
+      if(t.v==='True')return true;
+      if(t.v==='False')return false;
+      if(t.v==='None')return null;
+      if(peek()&&peek().v==='('){
+        next();const args=[];
+        if(peek()&&peek().v!==')'){args.push(parseOr());while(peek()&&peek().v===','){next();args.push(parseOr());}}
+        if(!peek()||peek().v!==')')throw TplError('ожидалась )');
+        next();return callFn(t.v,args);
+      }
+      let base=lookup(t.v);
+      while(peek()&&peek().v==='.'){
+        next();const p=next();
+        if(!p||p.t!=='name')throw TplError('ожидалось имя свойства после точки');
+        if(base==null||typeof base!=='object'||!(p.v in base))throw TplError('нет свойства «'+p.v+'»');
+        base=base[p.v];
+      }
+      return base;
+    }
+    if(t.v==='('){const v=parseOr();if(!peek()||peek().v!==')')throw TplError('ожидалась )');next();return v;}
+    throw TplError('не понимаю «'+t.v+'» в выражении');
+  }
+  const res=parseOr();
+  if(pos<toks.length)throw TplError('лишнее после выражения: «'+toks[pos].v+'»');
+  return res;
+}
+
+function parseTemplate(src){
+  const re=/\{\{([\s\S]*?)\}\}|\{%([\s\S]*?)%\}/g;
+  const nodes=[];let last=0,m;
+  while((m=re.exec(src))){
+    if(m.index>last)nodes.push({t:'text',v:src.slice(last,m.index)});
+    if(m[1]!==undefined)nodes.push({t:'expr',v:m[1].trim()});
+    else nodes.push({t:'tag',v:m[2].trim()});
+    last=re.lastIndex;
+  }
+  if(last<src.length)nodes.push({t:'text',v:src.slice(last)});
+  let i=0;
+  function parse(stop){
+    const list=[];
+    while(i<nodes.length){
+      const n=nodes[i];
+      if(n.t==='tag'){
+        const base=n.v.split(/\s/)[0];
+        if(stop.includes(base))return list;
+        i++;
+        if(base==='if'){
+          const cond=n.v.slice(2).trim();
+          const then=parse(['else','endif','elif']);
+          if(i<nodes.length&&nodes[i].v.split(/\s/)[0]==='elif')throw TplError('elif в тренажёре не нужен — используй if / else');
+          let els=[];
+          if(i<nodes.length&&nodes[i].v.split(/\s/)[0]==='else'){i++;els=parse(['endif']);}
+          if(i<nodes.length&&nodes[i].v.split(/\s/)[0]==='endif')i++;
+          else throw TplError('не найден закрывающий {% endif %}');
+          list.push({t:'if',cond,then,els});
+        }else if(base==='for'){
+          const mm=n.v.slice(3).trim().match(/^(.+?)\s+in\s+(.+)$/);
+          if(!mm)throw TplError('в {% for %} должно быть: for переменные in перечень');
+          const vars=mm[1].split(',').map(s=>s.trim()).filter(Boolean);
+          const inner=parse(['endfor']);
+          if(i<nodes.length&&nodes[i].v.split(/\s/)[0]==='endfor')i++;
+          else throw TplError('не найден закрывающий {% endfor %}');
+          list.push({t:'for',vars,iter:mm[2].trim(),body:inner});
+        }else if(base==='set'){
+          const mm=n.v.slice(3).trim().match(/^([A-Za-z_А-Яа-яЁё][\wА-Яа-яЁё]*)\s*=\s*(.+)$/);
+          if(!mm)throw TplError('в {% set %} должно быть: set имя = значение');
+          list.push({t:'set',name:mm[1],code:mm[2]});
+        }else if(['endif','endfor','else','elif'].includes(base)){
+          throw TplError('лишний тег {% '+n.v+' %}');
+        }else throw TplError('неизвестный оператор {% '+n.v+' %}');
+      }else{i++;list.push(n);}
+    }
+    if(stop.length)throw TplError('не хватает закрывающего тега {% '+stop[stop.length-1]+' %}');
+    return list;
+  }
+  return parse([]);
+}
+
+function renderNodes(nodes,ctx,out){
+  for(const n of nodes){
+    if(n.t==='text')out.push(n.v);
+    else if(n.t==='expr')out.push(toStr(evalExpr(n.v,ctx)));
+    else if(n.t==='set')ctx[n.name]=evalExpr(n.code,ctx);
+    else if(n.t==='if'){
+      if(pyTruthy(evalExpr(n.cond,ctx)))renderNodes(n.then,ctx,out);
+      else renderNodes(n.els,ctx,out);
+    }else if(n.t==='for'){
+      const seq=evalExpr(n.iter,ctx);
+      if(!Array.isArray(seq))throw TplError('«'+n.iter+'» в {% for %} должен быть списком');
+      for(const item of seq){
+        const sub=Object.create(ctx);
+        if(n.vars.length===1)sub[n.vars[0]]=item;
+        else{
+          if(!Array.isArray(item)||item.length!==n.vars.length)
+            throw TplError('не удалось распаковать элемент в {% for '+n.vars.join(', ')+' in … %}');
+          n.vars.forEach((v,k)=>sub[v]=item[k]);
+        }
+        renderNodes(n.body,sub,out);
+      }
+    }
+  }
+}
+
+function renderTemplate(src,ctx){
+  const nodes=parseTemplate(src);
+  const out=[];
+  renderNodes(nodes,Object.assign({},ctx),out);
+  return out.join('');
+}
+function tryRender(src,ctx){
+  try{return{html:renderTemplate(src,ctx)};}
+  catch(e){return{error:e.message};}
+}
+function norm(s){return s.replace(/\s+/g,' ').replace(/\s*(<[^>]*>)\s*/g,'$1').trim();}
+
+/* ================= задания ================= */
+function pyVal(v){
+  if(typeof v==='string')return"'"+v.replace(/'/g,"\\'")+"'";
+  if(v===true)return'True';if(v===false)return'False';
+  if(Array.isArray(v))return'['+v.map(pyVal).join(', ')+']';
+  return String(v);
+}
+
+const TASKS=[
+{
+  title:'Подстановка значений',
+  tag:'уровень 1 · {{ }}',
+  task:'В шаблон передаются параметры <b>header</b> и <b>text</b>. Выведи значение <b>header</b> внутри тега <code>&lt;h1&gt;</code>, а значение <b>text</b> — внутри тега <code>&lt;p&gt;</code>.',
+  tests:[{ctx:{header:'Привет, мир!',text:'Это моя первая страница.'}}],
+  hint:'Значение подставляется в двойных фигурных скобках: {{ header }}. Сами теги пиши как обычный HTML.',
+  solution:'<h1>{{ header }}</h1>\n<p>{{ text }}</p>',
+  check(run){
+    const n=run(this.tests[0].ctx);
+    if(!n.includes('<h1>Привет, мир!</h1>'))throw CheckFail('В <h1> должно оказаться значение параметра header: «Привет, мир!».');
+    if(!n.includes('<p>Это моя первая страница.</p>'))throw CheckFail('В <p> должно оказаться значение параметра text.');
+    return true;
+  }
+},
+{
+  title:'Выражения и конкатенация',
+  tag:'уровень 2 · {{ a }} и {{ b }}',
+  task:'Собери фразу вида «Игрок Аня заработал 7 очков» из параметров <b>player</b> и <b>points</b>. Вся фраза — внутри одного <code>&lt;p&gt;</code>. Слова «Игрок», «заработал», «очков» напиши в шаблоне сам.',
+  tests:[{ctx:{player:'Аня',points:7}},{ctx:{player:'Боря',points:12}}],
+  hint:'Подстановки можно писать прямо в тексте: Игрок {{ player }} заработал {{ points }} очков. Не забудь про пробелы между словами!',
+  solution:'<p>Игрок {{ player }} заработал {{ points }} очков</p>',
+  check(run){
+    for(const t of this.tests){
+      const n=run(t.ctx);
+      const want='<p>Игрок '+t.ctx.player+' заработал '+t.ctx.points+' очков</p>';
+      if(!n.includes(want))throw CheckFail('Для player="'+t.ctx.player+'", points='+t.ctx.points+' должно получиться: «Игрок '+t.ctx.player+' заработал '+t.ctx.points+' очков» внутри <p>. Проверь пробелы!');
+    }
+    return true;
+  }
+},
+{
+  title:'Функция в шаблоне',
+  tag:'уровень 3 · {{ len(...) }}',
+  task:'Выведи заголовок <b>title</b> внутри <code>&lt;h2&gt;</code>, а количество вариантов ответа — внутри <code>&lt;b&gt;</code>. Количество узнай функцией <code>len(answers)</code>, а не вписывай число руками — списки бывают разными!',
+  tests:[{ctx:{title:'Вопрос №1',answers:['Верно','Неверно','Не знаю']}},{ctx:{title:'Вопрос №2',answers:['Да','Нет']}}],
+  hint:'Функции вызываются прямо в двойных скобках: {{ len(answers) }}.',
+  solution:'<h2>{{ title }}</h2>\n<b>{{ len(answers) }}</b>',
+  check(run){
+    for(const t of this.tests){
+      const n=run(t.ctx);
+      if(!n.includes('<h2>'+t.ctx.title+'</h2>'))throw CheckFail('В <h2> должен быть заголовок «'+t.ctx.title+'».');
+      if(!n.includes('<b>'+t.ctx.answers.length+'</b>'))throw CheckFail('В <b> должно быть количество ответов: '+t.ctx.answers.length+'. Используй {{ len(answers) }}, а не число руками!');
+    }
+    return true;
+  }
+},
+{
+  title:'Условный оператор',
+  tag:'уровень 4 · {% if %}',
+  task:'Если пользователь вошёл (параметр <b>logged</b> равен True), выведи в <code>&lt;h2&gt;</code> приветствие с его именем из параметра <b>name</b>: «Привет, Иван!». Иначе выведи «Привет, гость!». Проверка выполнится на обоих вариантах данных.',
+  tests:[{ctx:{logged:true,name:'Иван'}},{ctx:{logged:false,name:''}}],
+  hint:'Схема: {% if logged %} … {% else %} … {% endif %}. В первой ветке используй {{ name }}, чтобы приветствие менялось вместе с данными.',
+  solution:'{% if logged %}\n<h2>Привет, {{ name }}!</h2>\n{% else %}\n<h2>Привет, гость!</h2>\n{% endif %}',
+  check(run){
+    const a=run(this.tests[0].ctx);
+    if(!a.includes('<h2>Привет, Иван!</h2>'))throw CheckFail('Когда logged=True, должно выводиться «Привет, Иван!» — используй {{ name }}.');
+    const b=run(this.tests[1].ctx);
+    if(!b.includes('<h2>Привет, гость!</h2>'))throw CheckFail('Когда logged=False, должно выводиться «Привет, гость!» — проверь ветку {% else %}.');
+    return true;
+  }
+},
+{
+  title:'Цикл for',
+  tag:'уровень 5 · {% for %}',
+  task:'Выведи все цвета из списка <b>colors</b>: каждый — в <code>&lt;li&gt;</code>, всё вместе — внутри <code>&lt;ul&gt;</code>. Цветов может быть сколько угодно, поэтому не вписывай их руками — используй цикл.',
+  tests:[{ctx:{colors:['Красный','Зелёный','Синий']}},{ctx:{colors:['Жёлтый','Фиолетовый']}}],
+  hint:'Схема: {% for color in colors %} <li>{{ color }}</li> {% endfor %}',
+  solution:'<ul>\n{% for color in colors %}\n<li>{{ color }}</li>\n{% endfor %}\n</ul>',
+  check(run){
+    for(const t of this.tests){
+      const n=run(t.ctx);
+      if(!n.includes('<ul>')||!n.includes('</ul>'))throw CheckFail('Нужен список <ul> … </ul>.');
+      for(const c of t.ctx.colors)if(!n.includes('<li>'+c+'</li>'))throw CheckFail('В списке не найден пункт <li>'+c+'</li>.');
+      const count=(n.match(/<li>/g)||[]).length;
+      if(count!==t.ctx.colors.length)throw CheckFail('Пунктов <li> должно быть ровно '+t.ctx.colors.length+', а получилось '+count+'. Используй цикл, а не вписывай цвета руками!');
+    }
+    return true;
+  }
+},
+{
+  title:'Цикл с двумя переменными',
+  tag:'уровень 6 · {% for id, name in … %}',
+  task:'Собери список выбора викторины: <code>&lt;select name="quiz"&gt;</code>, внутри — по одному <code>&lt;option value="{{ id }}"&gt;{{ name }}&lt;/option&gt;</code> на каждую запись списка <b>q_list</b>. В каждой записи два значения: номер и название.',
+  tests:[{ctx:{q_list:[[1,'Математика'],[2,'История'],[3,'Биология']]}},{ctx:{q_list:[[7,'Физика']]}}],
+  hint:'Распакуй пары значений в цикле: {% for id, name in q_list %}.',
+  solution:'<select name="quiz">\n{% for id, name in q_list %}\n<option value="{{ id }}">{{ name }}</option>\n{% endfor %}\n</select>',
+  check(run){
+    for(const t of this.tests){
+      const n=run(t.ctx);
+      if(!n.includes('<select name="quiz">'))throw CheckFail('Нужен элемент <select name="quiz">.');
+      for(const pair of t.ctx.q_list){
+        const want='<option value="'+pair[0]+'">'+pair[1]+'</option>';
+        if(!n.includes(want))throw CheckFail('Не найден '+want+'.');
+      }
+    }
+    return true;
+  }
+},
+{
+  title:'Страница вопроса викторины',
+  tag:'уровень 7 · итог',
+  task:'Собери форму ответа на вопрос — как в проекте «Викторина»:<br>1) вопрос в <code>&lt;h1&gt;</code>;<br>2) форма <code>&lt;form method="post" action="test"&gt;</code>;<br>3) скрытое поле <code>&lt;input type="hidden" name="q_id" value="{{ quest_id }}"&gt;</code>;<br>4) цикл по <b>answers_list</b>: для каждого ответа <code>&lt;input type="radio" name="ans_text" value="{{ answer }}"&gt;</code> и рядом текст <code>{{ answer }}</code>;<br>5) кнопка <code>&lt;input type="submit" value="Ответить"&gt;</code> и закрывающий <code>&lt;/form&gt;</code>.',
+  tests:[
+    {ctx:{question:'Сколько будет 2+2?',quest_id:17,answers_list:['4','3','22','5']}},
+    {ctx:{question:'Столица Франции?',quest_id:4,answers_list:['Париж','Лион']}}
+  ],
+  hint:'Скрытое поле хранит номер вопроса, но не видно пользователю. Правильный ответ в коде никак не выделяется — список уже перемешан.',
+  solution:'<h1>{{ question }}</h1>\n<form method="post" action="test">\n<input type="hidden" name="q_id" value="{{ quest_id }}">\n{% for answer in answers_list %}\n<input type="radio" name="ans_text" value="{{ answer }}"> {{ answer }}\n{% endfor %}\n<input type="submit" value="Ответить">\n</form>',
+  check(run){
+    for(const t of this.tests){
+      const n=run(t.ctx);
+      if(!n.includes('<h1>'+t.ctx.question+'</h1>'))throw CheckFail('Вопрос должен быть в <h1>.');
+      if(!n.includes('<form method="post" action="test">'))throw CheckFail('Нужна форма <form method="post" action="test">.');
+      if(!n.includes('<input type="hidden" name="q_id" value="'+t.ctx.quest_id+'">'))
+        throw CheckFail('Нужно скрытое поле: <input type="hidden" name="q_id" value="'+t.ctx.quest_id+'">.');
+      const radios=(n.match(/type="radio"/g)||[]).length;
+      if(radios!==t.ctx.answers_list.length)throw CheckFail('Радиокнопок должно быть '+t.ctx.answers_list.length+', а получилось '+radios+'.');
+      for(const a of t.ctx.answers_list){
+        if(!n.includes('value="'+a+'">'+a))throw CheckFail('Нет радиокнопки с текстом варианта «'+a+'» (нужно: value="'+a+'" и рядом текст {{ answer }}).');
+      }
+      if(!n.includes('<input type="submit" value="Ответить">'))throw CheckFail('Нужна кнопка <input type="submit" value="Ответить">.');
+      if(!n.includes('</form>'))throw CheckFail('Форма должна закрываться тегом </form>.');
+    }
+    return true;
+  }
+}
+];
+
+/* ================= интерфейс ================= */
+const editor=document.getElementById('editor');
+const resCode=document.getElementById('resCode');
+const preview=document.getElementById('preview');
+const fb=document.getElementById('fb');
+let cur=0;
+let done=JSON.parse(localStorage.getItem('tt.done')||'[]');
+let drafts=JSON.parse(localStorage.getItem('tt.drafts')||'{}');
+let timer=null;
+
+const $=id=>document.getElementById(id);
+
+function buildLevels(){
+  const box=$('levels');box.innerHTML='';
+  TASKS.forEach((t,i)=>{
+    const b=document.createElement('button');
+    b.className='lvl'+(i===cur?' cur':'')+(done.includes(i)?' done':'');
+    b.textContent=done.includes(i)?'✓':(i+1);
+    b.title=t.title;
+    b.onclick=()=>loadTask(i);
+    box.appendChild(b);
+  });
+  $('score').textContent='выполнено: '+done.length+' / '+TASKS.length;
+}
+
+function dataBlockHTML(ctx,label){
+  const parts=Object.entries(ctx).map(([k,v])=>{
+    const s=pyVal(v);
+    const cls=/^'/.test(s)?'str':/^\d/.test(s)?'num':'';
+    return k+'=<span class="'+(cls)+'">'+s.replace(/</g,'&lt;')+'</span>';
+  }).join(', ');
+  return '<pre><span class="lbl">'+label+'</span>\n<span class="fn">render_template</span>(\'index.html\', '+parts+')</pre>';
+}
+
+function loadTask(i){
+  cur=i;
+  const t=TASKS[i];
+  $('taskTag').textContent=t.tag;
+  $('taskTitle').textContent=t.title;
+  $('taskText').innerHTML=t.task;
+  $('hintBox').innerHTML='💡 '+t.hint;
+  $('hintBox').classList.remove('show');
+  $('multitest').innerHTML=t.tests.length>1?'<span class="multitest">⚠ При проверке шаблон запустится на каждом наборе данных — он должен работать не только для варианта 1, а для любых значений!</span>':'';
+  const db=$('dataBlocks');db.innerHTML='';
+  t.tests.forEach((tt,k)=>{
+    const lbl=t.tests.length>1?(k===0?'вариант 1 (показан в предпросмотре)':'вариант '+(k+1)+' (шаблон будет запущен и с этими данными при проверке)'):'вызов функции обработки';
+    db.insertAdjacentHTML('beforeend',dataBlockHTML(tt.ctx,lbl));
+  });
+  editor.value=(drafts[i]!==undefined?drafts[i]:'');
+  $('prevBtn').disabled=(i===0);
+  $('nextBtn').style.visibility=(i===TASKS.length-1)?'hidden':'visible';
+  buildLevels();
+  fb.className='fb';
+  if(editor.value.trim())runLive();else{resCode.textContent='// результат появится здесь…';resCode.classList.remove('err');preview.srcdoc='';}
+}
+
+function runLive(){
+  const t=TASKS[cur];
+  drafts[cur]=editor.value;
+  localStorage.setItem('tt.drafts',JSON.stringify(drafts));
+  if(!editor.value.trim()){resCode.textContent='// результат появится здесь…';resCode.classList.remove('err');preview.srcdoc='';return;}
+  const r=tryRender(editor.value,t.tests[0].ctx);
+  if(r.error){
+    resCode.textContent='⚠ Ошибка обработки: '+r.error;
+    resCode.classList.add('err');
+    preview.srcdoc='';
+    return;
+  }
+  resCode.classList.remove('err');
+  resCode.textContent=r.html;
+  preview.srcdoc='<!doctype html><html><head><meta charset="utf-8"><style>'+
+    'body{font-family:Manrope,Arial,sans-serif;padding:12px;margin:0;color:#1d1f38}'+
+    'h1{font-size:20px}h2{font-size:17px}input{margin:3px 2px}li{margin:2px 0}'+
+    '</style></head><body>'+r.html+'</body></html>';
+}
+
+function showFB(msg,type){
+  fb.innerHTML=msg;
+  fb.className='fb show '+type;
+}
+
+function checkTask(){
+  const t=TASKS[cur];
+  const code=editor.value;
+  if(!code.trim()){showFB('Сначала напиши шаблон в редакторе.','info');return;}
+  const first=tryRender(code,t.tests[0].ctx);
+  if(first.error){showFB('⚠ Исправь ошибку обработки: '+first.error,'err');return;}
+  const run=ctx=>{
+    const r=tryRender(code,ctx);
+    if(r.error)throw CheckFail('Ошибка на другом наборе данных: '+r.error);
+    return norm(r.html);
+  };
+  try{
+    t.check(run);
+    if(!done.includes(cur)){done.push(cur);localStorage.setItem('tt.done',JSON.stringify(done));}
+    buildLevels();
+    if(cur===TASKS.length-1&&done.length===TASKS.length){
+      showFB('🏆 Поздравляем! Все 7 уровней пройдены — теперь ты умеешь собирать страницы из шаблонов, как настоящий веб-разработчик!','ok');
+    }else{
+      showFB('🎉 Отлично! Задание выполнено. '+(cur<TASKS.length-1?'Нажми «Следующее →», чтобы продолжить.':''), 'ok');
+    }
+  }catch(e){
+    showFB('✖ '+e.message,'err');
+  }
+}
+
+editor.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(runLive,500);});
+editor.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){
+    e.preventDefault();
+    const s=editor.selectionStart,ep=editor.selectionEnd;
+    editor.value=editor.value.slice(0,s)+'  '+editor.value.slice(ep);
+    editor.selectionStart=editor.selectionEnd=s+2;
+  }
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();checkTask();}
+});
+
+$('checkBtn').onclick=checkTask;
+$('hintBtn').onclick=()=>$('hintBox').classList.toggle('show');
+$('solBtn').onclick=()=>{
+  editor.value=TASKS[cur].solution;
+  runLive();
+  showFB('Решение вставлено в редактор. Изучи его, а затем попробуй набрать самостоятельно и нажми «Проверить задание».','info');
+};
+$('prevBtn').onclick=()=>{if(cur>0)loadTask(cur-1);};
+$('nextBtn').onclick=()=>{if(cur<TASKS.length-1)loadTask(cur+1);};
+$('reset').onclick=()=>{
+  if(confirm('Сбросить весь прогресс?')){
+    done=[];drafts={};
+    localStorage.removeItem('tt.done');localStorage.removeItem('tt.drafts');
+    loadTask(0);
+  }
+};
+
+loadTask(0);
+</script>
+</body>
+</html>

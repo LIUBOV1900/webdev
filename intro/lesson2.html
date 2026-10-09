@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оформление веб-страниц — CSS (Модуль 5, Урок 2)</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dur:.7s;
+    --bg1:#101228; --bg2:#251a4a;
+    --paper:#fffdf7; --paper2:#f6efe1;
+    --ink:#1d1f38; --ink-soft:#4c4f6a;
+    --accent:#ff5a4e; --accent2:#14b8a6; --blue:#4361ee; --yellow:#ffcd42;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Manrope',system-ui,sans-serif;background:linear-gradient(160deg,var(--bg2),var(--bg1) 70%);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:20px}
+
+  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+  .bg::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1.2px,transparent 1.2px);background-size:28px 28px}
+  .blob{position:absolute;border-radius:50%;filter:blur(85px);opacity:.5}
+  .b1{width:520px;height:520px;background:#ff5a4e;top:-160px;left:-140px;animation:drift 16s ease-in-out infinite alternate}
+  .b2{width:640px;height:640px;background:#4361ee;bottom:-220px;right:-160px;animation:drift 21s ease-in-out infinite alternate-reverse}
+  .b3{width:420px;height:420px;background:#14b8a6;top:42%;left:56%;opacity:.3;animation:drift 14s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate(70px,45px) scale(1.12)}}
+
+  .topbar{width:min(1000px,95vw);display:flex;align-items:center;gap:16px;margin-bottom:14px}
+  .brand{font-family:'Unbounded';font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:#fff;white-space:nowrap;text-shadow:0 2px 14px rgba(255,90,78,.45)}
+  .progress{flex:1;height:6px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--yellow),var(--accent2));border-radius:99px;transition:width .4s ease}
+  .counter{font-variant-numeric:tabular-nums;font-size:14px;font-weight:700;min-width:60px;text-align:right;color:#fff}
+
+  .book{width:min(1000px,95vw);height:min(680px,calc(100vh - 180px));position:relative;perspective:1800px}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;
+    background:
+      radial-gradient(460px 280px at 108% -10%, rgba(67,97,238,.14), transparent 62%),
+      radial-gradient(420px 260px at -8% 110%, rgba(255,90,78,.12), transparent 62%),
+      linear-gradient(105deg,var(--paper2) 0%,var(--paper) 12%,var(--paper) 100%);
+    border-radius:6px 20px 20px 6px;
+    box-shadow:0 34px 70px -20px rgba(0,0,0,.6),0 2px 0 rgba(255,255,255,.5) inset;
+    transform-origin:left center;backface-visibility:hidden;
+    transition:transform var(--dur) cubic-bezier(.5,.05,.28,.99);overflow:hidden;
+    padding:clamp(24px,4.2vw,50px) clamp(24px,4.8vw,58px)}
+  .slide::before{content:"";position:absolute;left:0;top:0;bottom:0;width:26px;
+    background:linear-gradient(90deg,rgba(0,0,0,.20),rgba(0,0,0,.05) 55%,rgba(0,0,0,0));pointer-events:none}
+  .pagenum{position:absolute;bottom:14px;right:24px;font-size:13px;color:var(--ink-soft);font-weight:700}
+
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  .slide .content>*,.cover>*:not(.chip){animation:rise .55s cubic-bezier(.2,.7,.3,1) both}
+  .slide .content>*:nth-child(1),.cover>*:nth-child(1){animation-delay:.08s}
+  .slide .content>*:nth-child(2),.cover>*:nth-child(2){animation-delay:.16s}
+  .slide .content>*:nth-child(3),.cover>*:nth-child(3){animation-delay:.24s}
+  .slide .content>*:nth-child(4),.cover>*:nth-child(4){animation-delay:.32s}
+  .slide .content>*:nth-child(5),.cover>*:nth-child(5){animation-delay:.40s}
+  .slide .content>*:nth-child(6),.cover>*:nth-child(6){animation-delay:.48s}
+
+  .eyebrow{font-family:'Unbounded';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:28px;height:3px;background:linear-gradient(90deg,var(--accent),var(--yellow));border-radius:3px}
+  h1{font-family:'Unbounded';font-weight:900;line-height:1.04}
+  h2{font-family:'Unbounded';font-weight:700;font-size:clamp(23px,3.4vw,36px);line-height:1.12;margin-bottom:clamp(12px,2.2vh,22px)}
+  p.lead{font-size:clamp(16.5px,2.15vw,21px);line-height:1.55;color:var(--ink-soft);max-width:64ch;font-weight:500}
+  p.lead b{color:var(--ink)}
+  .content{flex:1;display:flex;flex-direction:column;min-height:0}
+
+  .hl{background:linear-gradient(transparent 56%,rgba(255,205,66,.9) 56%);padding:0 3px;border-radius:2px;color:var(--ink)}
+  .hl-t{background:linear-gradient(transparent 56%,rgba(20,184,166,.45) 56%);padding:0 3px;color:var(--ink)}
+  .hl-b{background:linear-gradient(transparent 56%,rgba(67,97,238,.35) 56%);padding:0 3px;color:var(--ink)}
+
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:#fff;border:1.5px solid #eee3d4;border-radius:18px;padding:16px 18px;
+    box-shadow:0 10px 26px -16px rgba(29,31,56,.4);transition:transform .25s}
+  .card:hover{transform:translateY(-3px)}
+  .card h3{font-size:clamp(16px,2vw,19px);font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:9px}
+  .card p{font-size:clamp(14.5px,1.85vw,17.5px);line-height:1.5;color:var(--ink-soft);font-weight:500}
+  .card p b{color:var(--ink)}
+  .tint-b{background:linear-gradient(135deg,#eef1ff,#fff 65%);border-color:#dbe4ff}
+  .tint-a{background:linear-gradient(135deg,#fff0ee,#fff 65%);border-color:#ffdfdb}
+  .tint-t{background:linear-gradient(135deg,#e7faf6,#fff 65%);border-color:#c9f1e9}
+  .card ul{list-style:none;margin-top:6px}
+  .card ul li{font-size:clamp(14px,1.8vw,16.5px);padding:3px 0 3px 20px;position:relative;color:var(--ink-soft);font-weight:600}
+  .card ul li::before{content:"›";position:absolute;left:4px;color:var(--blue);font-weight:800}
+
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:11px}
+  ul.clean li{position:relative;padding-left:30px;font-size:clamp(16px,2.05vw,19.5px);line-height:1.5;color:var(--ink);font-weight:600}
+  ul.clean li::before{content:"";position:absolute;left:0;top:9px;width:11px;height:11px;border-radius:4px;background:linear-gradient(135deg,var(--accent),var(--yellow));transform:rotate(45deg)}
+  ul.clean li b{color:var(--blue)}
+  ul.clean li code{font-family:'JetBrains Mono',Consolas,monospace;font-size:.92em}
+
+  pre.code{background:#191c30;color:#eef0ff;border-radius:14px;padding:15px 20px;
+    font-family:'JetBrains Mono',Consolas,monospace;font-size:clamp(12.5px,1.7vw,15.5px);line-height:1.62;overflow:auto;
+    border:1px solid #2c3050;box-shadow:0 12px 28px -16px rgba(0,0,0,.5)}
+  pre.code .kw{color:#c792ea;font-weight:700}
+  pre.code .tag{color:#7ee0d2;font-weight:700}
+  pre.code .attr{color:#ffb86b}
+  pre.code .str{color:#a5d6a7}
+  pre.code .num{color:#f78c6c}
+  pre.code .sel{color:#7ee0d2;font-weight:700}
+  pre.code .prop{color:#82aaff;font-weight:700}
+  pre.code .val{color:#a5d6a7}
+  pre.code .cmt{color:#8a8fb5;font-style:italic}
+  pre.mini{font-size:clamp(11.5px,1.4vw,13px);padding:9px 12px;line-height:1.5;margin:8px 0}
+  code.inline{background:#f3ead8;color:#c03a2b;padding:2px 8px;border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:.9em;font-weight:700}
+
+  .cover{justify-content:center}
+  .cover .kicker{font-family:'Unbounded';font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:20px;font-weight:700}
+  .cover h1{font-size:clamp(30px,5.4vw,58px);margin-bottom:22px}
+  .cover h1 em{font-style:normal;background:linear-gradient(92deg,var(--accent),#ff9f2e);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cover .tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .pill{font-size:14px;font-weight:800;padding:9px 16px;border-radius:99px;background:#fff;border:1.5px solid #eadfc9;color:var(--ink);box-shadow:0 6px 16px -10px rgba(29,31,56,.4)}
+  .pill.a{background:linear-gradient(92deg,var(--accent),#ff8a3a);color:#fff;border-color:transparent}
+  .pill.b{background:linear-gradient(92deg,var(--blue),#7aa5ff);color:#fff;border-color:transparent}
+  .pill.t{background:linear-gradient(92deg,var(--accent2),#5eead4);color:#06332e;border-color:transparent}
+  .pill.done{opacity:.55;text-decoration:line-through}
+  .chip{position:absolute;display:grid;place-items:center;width:66px;height:66px;border-radius:20px;background:#fff;
+    box-shadow:0 16px 34px -14px rgba(29,31,56,.5);font-size:30px;animation:bob 6s ease-in-out infinite}
+  .chip.c1{top:13%;right:10%;transform:rotate(9deg)}
+  .chip.c2{bottom:16%;right:24%;animation-delay:1.2s;background:linear-gradient(135deg,var(--accent),#ff9f2e);color:#fff;font-family:'Unbounded';font-size:17px;font-weight:900}
+  .chip.c3{top:24%;right:31%;animation-delay:.6s;background:linear-gradient(135deg,var(--blue),#7aa5ff)}
+  @keyframes bob{50%{translate:0 -14px}}
+
+  .steps{display:flex;flex-direction:column;gap:10px;counter-reset:s}
+  .step{display:flex;gap:15px;align-items:flex-start;background:#fff;border:1.5px solid #eee3d4;border-radius:14px;padding:10px 18px;box-shadow:0 8px 20px -14px rgba(29,31,56,.4)}
+  .step i{counter-increment:s;font-style:normal;font-family:'Unbounded';font-weight:700;font-size:15px;color:#fff;
+    background:linear-gradient(135deg,var(--blue),#7aa5ff);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 6px 14px -6px rgba(67,97,238,.7)}
+  .step p{font-size:clamp(15px,1.95vw,18.5px);line-height:1.5;color:var(--ink);font-weight:600}
+  .step p b{color:var(--blue)}
+  .step p code{font-family:'JetBrains Mono',monospace;font-size:.9em;background:#f3ead8;color:#c03a2b;padding:1px 6px;border-radius:6px}
+
+  .kv{display:flex;gap:14px;align-items:baseline;background:#fff;border-left:5px solid var(--accent2);border-radius:12px;padding:10px 18px;margin-bottom:10px;box-shadow:0 8px 20px -14px rgba(29,31,56,.4)}
+  .kv code{font-family:'JetBrains Mono',monospace;font-weight:700;color:#0f766e;font-size:clamp(13.5px,1.7vw,16px);min-width:230px;flex:none}
+  .kv span{font-size:clamp(14.5px,1.85vw,17.5px);color:var(--ink-soft);font-weight:600}
+  .kv span b{color:var(--ink)}
+
+  /* box model */
+  .model .m-margin{border:2px dashed #94a3b8;border-radius:14px;padding:14px;background:#f8fafc}
+  .model .m-border{border:3px solid var(--blue);border-radius:12px;padding:14px;background:#eef1ff}
+  .model .m-padding{border:2px dashed var(--accent);border-radius:10px;padding:14px;background:#fff0ee}
+  .model .m-content{background:#fff;border:1.5px solid #eee3d4;border-radius:8px;padding:12px;font-weight:800;text-align:center;font-size:clamp(13px,1.7vw,16px)}
+  .model .lbl{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px}
+
+  /* сводка */
+  .taggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+  .tg{background:#fff;border:1.5px solid #eee3d4;border-radius:13px;padding:11px 14px;display:flex;flex-direction:column;gap:3px}
+  .tg code{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--blue);font-size:15px}
+  .tg span{font-size:13px;color:var(--ink-soft);line-height:1.4;font-weight:600}
+  .freq{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;width:max-content;margin-top:4px}
+  .freq.hot{background:#ffe8d6;color:#c2410c}
+  .freq.mid{background:#e0e7ff;color:#3730a3}
+  .freq.low{background:#f1f5f9;color:#64748b}
+
+  .finale .big{font-family:'Unbounded';font-weight:900;font-size:clamp(24px,3.8vw,42px);line-height:1.12;margin-bottom:16px}
+  .finale .big span{background:linear-gradient(92deg,var(--accent2),#5eead4);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .nav{width:min(1000px,95vw);display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+  .btn{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+    background:linear-gradient(92deg,var(--accent),#ff8a3a);border:none;color:#fff;
+    padding:13px 24px;border-radius:99px;font-family:'Manrope';font-weight:800;font-size:15px;
+    box-shadow:0 12px 26px -12px rgba(255,90,78,.7);transition:.2s}
+  .btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 16px 32px -12px rgba(255,90,78,.85)}
+  .btn:disabled{opacity:.3;cursor:default;box-shadow:none}
+  .hint{color:#aab0d8;font-size:13px;font-weight:600}
+  @media(max-width:720px){
+    .hint{display:none}.g2,.g3{grid-template-columns:1fr}
+    .chip{display:none}.kv{flex-direction:column;gap:4px}.kv code{min-width:0}
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <div class="topbar">
+    <span class="brand">М5·У2 · Оформление веб-страниц</span>
+    <div class="progress"><i id="bar"></i></div>
+    <span class="counter" id="counter">1 / 19</span>
+  </div>
+
+  <div class="book" id="book">
+
+    <!-- 1. Титул -->
+    <section class="slide cover">
+      <span class="chip c1">🎨</span><span class="chip c2">CSS</span><span class="chip c3">✨</span>
+      <div class="kicker">Модуль 5 · Урок 2</div>
+      <h1>Оформление<br><em>веб-страниц</em></h1>
+      <p class="lead" style="margin-bottom:26px">Почему HTML-тегов мало для красоты сайта — и как CSS превращает обычную страницу в сайт с уникальным стилем.</p>
+      <div class="tags">
+        <span class="pill a">CSS</span>
+        <span class="pill t">Селекторы</span>
+        <span class="pill b">Классы · Свойства</span>
+      </div>
+      <span class="pagenum">01</span>
+    </section>
+
+    <!-- 2. Повторение -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Повторение</div>
+        <h2>Что мы уже умеем</h2>
+        <p class="lead" style="margin-bottom:16px">На прошлом уроке мы изучили <span class="hl-b">HTML</span> — язык, который задаёт <b>структуру</b> страницы:</p>
+        <ul class="clean">
+          <li>структура документа: <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code>;</li>
+          <li>заголовки <code>&lt;h1&gt;–&lt;h6&gt;</code> и абзацы <code>&lt;p&gt;</code>;</li>
+          <li>списки <code>&lt;ul&gt;</code> / <code>&lt;ol&gt;</code> с пунктами <code>&lt;li&gt;</code>;</li>
+          <li>ссылки <code>&lt;a&gt;</code> и изображения <code>&lt;img&gt;</code>;</li>
+          <li>выделения <code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, комментарии <code>&lt;!-- --&gt;</code>.</li>
+        </ul>
+        <p class="lead" style="margin-top:16px"><b class="hl">Структура готова. А как насчёт красоты?</b></p>
+      </div>
+      <span class="pagenum">02</span>
+    </section>
+
+    <!-- 3. Обсуждение -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Обсуждение</div>
+        <h2>Как выглядят настоящие сайты?</h2>
+        <p class="lead" style="margin-bottom:16px">Большинство сайтов отличаются особым оформлением и <span class="hl">уникальным, легко узнаваемым стилем</span>: цвета, шрифты, отступы, рамки.</p>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-b"><h3>🤔 Вопрос</h3><p>Получится ли оформить такой сайт с помощью изученных тегов HTML?</p></div>
+          <div class="card tint-a"><h3>💬 Ответ</h3><p>Пока <b>нет</b> — инструментов мало. Сегодня познакомимся с более мощным средством оформления!</p></div>
+        </div>
+      </div>
+      <span class="pagenum">03</span>
+    </section>
+
+    <!-- 4. Оформление в HTML -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Элементы оформления в HTML</div>
+        <h2>Управление шрифтом тегами</h2>
+        <div class="grid g2" style="margin-bottom:14px">
+          <div class="card tint-t"><h3>📏 Шкала размеров</h3><p>Размер шрифта в HTML — условные единицы <b>от 1 до 7</b>, по умолчанию — <b>3</b>. <code>&lt;big&gt;</code> увеличивает на 1, <code>&lt;small&gt;</code> уменьшает на 1. Теги можно вкладывать друг в друга.</p></div>
+          <div class="card tint-b"><h3>🔤 Тег &lt;font&gt;</h3><p><code>color</code> — цвет текста, <code>size</code> — размер, <code>face</code> — тип шрифта. Атрибуты можно использовать выборочно.</p></div>
+        </div>
+        <pre class="code">&lt;<span class="tag">font</span> <span class="attr">color</span>=<span class="str">"red"</span> <span class="attr">size</span>=<span class="str">"5"</span> <span class="attr">face</span>=<span class="str">"Arial"</span>&gt;Важный текст&lt;/<span class="tag">font</span>&gt;
+&lt;<span class="tag">p</span>&gt;Обычный, &lt;<span class="tag">big</span>&gt;крупнее&lt;/<span class="tag">big</span>&gt; и &lt;<span class="tag">small</span>&gt;мельче&lt;/<span class="tag">small</span>&gt; текст&lt;/<span class="tag">p</span>&gt;</pre>
+      </div>
+      <span class="pagenum">04</span>
+    </section>
+
+    <!-- 5. Проблема -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Проблема</div>
+        <h2>Что не так с этим подходом?</h2>
+        <p class="lead" style="margin-bottom:14px">Представь: хотим, чтобы <b>все заголовки</b> на сайте были одного цвета.</p>
+        <div class="steps">
+          <div class="step"><i></i><p>Придётся <b>каждый раз повторять</b> теги и атрибуты у каждого заголовка.</p></div>
+          <div class="step"><i></i><p>В сайте десятки страниц — значит, <b>копировать их на каждую страницу</b>!</p></div>
+          <div class="step"><i></i><p>Захотим сменить стиль всего сайта? Придётся менять атрибуты <b>каждого тега на каждой странице</b>… 😱</p></div>
+        </div>
+        <p class="lead" style="margin-top:14px"><b class="hl">…или освоить более эффективный инструмент работы со стилями.</b></p>
+      </div>
+      <span class="pagenum">05</span>
+    </section>
+
+    <!-- 6. CSS -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>CSS — каскадные таблицы стилей</h2>
+        <p class="lead" style="margin-bottom:14px"><b>CSS</b> (Cascading Style Sheets) — язык, который описывает <span class="hl">оформление</span> веб-страниц отдельно от их содержимого.</p>
+        <div class="card tint-t" style="margin-bottom:14px">
+          <h3>🎯 Что такое стиль?</h3>
+          <p><b>Стиль</b> — набор параметров, с помощью которых можно настроить внешний вид <b>всех одинаковых элементов</b> страницы. Например, сразу всех заголовков первого уровня.</p>
+        </div>
+        <p class="lead"><b class="hl-b">Одно правило в CSS → применяется ко всем подходящим элементам сразу.</b></p>
+      </div>
+      <span class="pagenum">06</span>
+    </section>
+
+    <!-- 7. Преимущества -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Преимущества CSS</h2>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-b"><h3>🧩 Разделение труда</h3><p>Вёрстка и дизайн живут в разных файлах — над ними можно работать <b>параллельно</b>.</p></div>
+          <div class="card tint-a"><h3>📱 Адаптация</h3><p>Стили определяют вид страницы для разных устройств: монитора, смартфона, планшета, принтера.</p></div>
+          <div class="card tint-t"><h3>🎨 Больше возможностей</h3><p>У CSS <b>гораздо больше</b> способов оформить элементы, чем у HTML-тегов.</p></div>
+          <div class="card tint-b"><h3>⚡ Быстрая загрузка</h3><p>Файл стилей попадает в <b>кэш браузера</b>: код страниц уменьшается, загрузка ускоряется.</p></div>
+        </div>
+      </div>
+      <span class="pagenum">07</span>
+    </section>
+
+    <!-- 8. Способы подключения -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Как создать таблицу стилей?</h2>
+        <div class="grid g3" style="margin-bottom:12px">
+          <div class="card tint-a"><h3>🔧 Внутри тега</h3>
+            <pre class="code mini">&lt;p <span class="attr">style</span>=<span class="str">"color:red"</span>&gt;…&lt;/p&gt;</pre>
+            <p>Быстро, но только для <b>одного элемента</b>.</p></div>
+          <div class="card tint-b"><h3>📄 Внутри &lt;head&gt;</h3>
+            <pre class="code mini">&lt;<span class="tag">style</span>&gt;
+  p { color: red; }
+&lt;/<span class="tag">style</span>&gt;</pre>
+            <p>Стили для <b>одной страницы</b>.</p></div>
+          <div class="card tint-t"><h3>🗂️ Файл .css 🔥</h3>
+            <pre class="code mini">&lt;<span class="tag">link</span> <span class="attr">rel</span>=<span class="str">"stylesheet"</span>
+      <span class="attr">href</span>=<span class="str">"styles.css"</span>&gt;</pre>
+            <p><b>Наиболее предпочтительный</b> способ. Оба файла — в одной папке.</p></div>
+        </div>
+        <p class="lead">Убедиться в мощи метода: <b>csszengarden.com</b> — один и тот же текст в десятках совершенно разных оформлений. Всё меняется одним CSS-файлом! ✨</p>
+      </div>
+      <span class="pagenum">08</span>
+    </section>
+
+    <!-- 9. Синтаксис -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Синтаксис CSS</h2>
+        <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:18px;flex:1;align-items:start">
+          <pre class="code"><span class="sel">h1</span> {
+    <span class="prop">color</span>: <span class="val">red</span>;
+    <span class="prop">font-size</span>: <span class="num">40px</span>;
+}</pre>
+          <ul class="clean">
+            <li><code>селектор</code> — элемент, который оформляем (<code>h1</code>, <code>p</code>…);</li>
+            <li><code>свойство</code> — что меняем;</li>
+            <li><code>значение</code> — как меняем;</li>
+            <li>каждая пара <code>свойство: значение;</code> заканчивается <b>точкой с запятой</b>;</li>
+            <li>пар может быть <b>сколько угодно</b>.</li>
+          </ul>
+        </div>
+        <p class="lead" style="margin-top:12px">Один стиль для нескольких селекторов: <code class="inline">h1, h2, h3 { color: navy; }</code> — остальные свойства останутся индивидуальными.</p>
+      </div>
+      <span class="pagenum">09</span>
+    </section>
+
+    <!-- 10. Значения -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Чем могут быть значения?</h2>
+        <div class="kv"><code>font-size: 30px; width: 20%</code><span><b>число</b> с единицами измерения</span></div>
+        <div class="kv"><code>color: red; rgb(255, 0, 0)</code><span><b>цвет</b> — ключевым словом или в формате RGB</span></div>
+        <div class="kv"><code>url("images/fon.jpg")</code><span><b>адрес</b> файла: изображение, текстура, звук…</span></div>
+        <div class="kv"><code>italic; center; no-repeat</code><span><b>ключевое слово</b> — пишется без кавычек</span></div>
+        <p class="lead" style="margin-top:12px">Например, фон страницы: <code class="inline">body { background: url('bokeh.jpg'); }</code></p>
+      </div>
+      <span class="pagenum">10</span>
+    </section>
+
+    <!-- 11. Единицы измерения -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Числа и единицы измерения</h2>
+        <div class="kv"><code>width: 20%</code><span>проценты — относительно ширины родителя</span></div>
+        <div class="kv"><code>font-size: 30px</code><span><b>пиксели</b> — самая частая единица 🔥</span></div>
+        <div class="kv"><code>font-size: 1.5em</code><span>em — относительно текущего размера (здесь 150%)</span></div>
+        <div class="kv"><code>font-size: 24pt</code><span>пункты (1 pt = 1/72 дюйма) — обычно для печати ○</span></div>
+        <div class="kv"><code>margin-left: 30mm</code><span>миллиметры — в вебе используется редко ○</span></div>
+        <p class="lead" style="margin-top:10px">Запомни главное: <span class="hl">px</span> — чаще всего, <span class="hl-t">%</span> и <span class="hl-t">em</span> — часто, pt и mm — редко.</p>
+      </div>
+      <span class="pagenum">11</span>
+    </section>
+
+    <!-- 12. Цвет -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Цвет: три способа</h2>
+        <div class="kv"><code>color: red; color: aqua;</code><span>1. <b>ключевое слово</b> — браузеры знают цвета по имени 🔥</span></div>
+        <div class="kv"><code>color: rgb(0, 255, 170);</code><span>2. RGB в <b>десятичной</b> системе</span></div>
+        <div class="kv"><code>color: #00FFAA;</code><span>3. RGB в <b>шестнадцатеричной</b> системе — чаще всего в коде 🔥</span></div>
+        <div class="card tint-b" style="margin-top:12px">
+          <h3>🌈 Модель RGB</h3>
+          <p>Цвет — смесь трёх лучей: <b style="color:#e11d48">красного</b>, <b style="color:#16a34a">зелёного</b> и <b style="color:#2563eb">синего</b>. Каждый компонент — от <b>0 до 255</b>. <code>rgb(0, 255, 170)</code> и <code>#00FFAA</code> — один и тот же цвет в разных системах счисления.</p>
+        </div>
+      </div>
+      <span class="pagenum">12</span>
+    </section>
+
+    <!-- 13. Классы: проблема -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>А если нужны разные стили?</h2>
+        <p class="lead" style="margin-bottom:14px">Ситуация: часть абзацев нужно оформить <b>по особым правилам</b> — уменьшенный курсивный шрифт, серый фон и небольшой сдвиг вправо.</p>
+        <p class="lead" style="margin-bottom:14px">И тут тебе так понравилась идея, что ты хочешь применить этот же стиль ещё и к <b>некоторым заголовкам, цитатам и спискам</b>!</p>
+        <div class="grid g2">
+          <div class="card tint-a"><h3>😕 В чём загвоздка?</h3><p>Тег <code>&lt;p&gt;</code> всего один, и стиль у него может быть только <b>один</b> — на все абзацы сразу.</p></div>
+          <div class="card tint-b"><h3>❓ Вопрос</h3><p>Можно ли применять одно и то же оформление <b>выборочно</b> к разным тегам?</p></div>
+        </div>
+      </div>
+      <span class="pagenum">13</span>
+    </section>
+
+    <!-- 14. Классы: решение -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Решение</div>
+        <h2>Классы CSS</h2>
+        <p class="lead" style="margin-bottom:12px"><b>Классы</b> настраивают одинаковое оформление для <span class="hl">группы или подгруппы элементов</span>. Класс — атрибут тега, связывающий элемент со стилем.</p>
+        <pre class="code" style="margin-bottom:12px"><span class="sel">.example</span> { <span class="prop">font-style</span>: <span class="val">italic</span>; <span class="prop">background-color</span>: <span class="val">#eeeeee</span>; }
+
+&lt;<span class="tag">p</span> <span class="attr">class</span>=<span class="str">"example"</span>&gt;Особый абзац&lt;/<span class="tag">p</span>&gt;
+&lt;<span class="tag">h2</span> <span class="attr">class</span>=<span class="str">"example"</span>&gt;Заголовок с тем же стилем&lt;/<span class="tag">h2</span>&gt;</pre>
+        <div class="grid g2">
+          <div class="card tint-t"><h3>Без привязки к тегу</h3><p><code>.example { }</code> — стиль применится к <b>любому</b> элементу с <code>class="example"</code>.</p></div>
+          <div class="card tint-b"><h3>С привязкой к тегу</h3><p><code>p.example { }</code> — только к <b>абзацам</b> с этим классом.</p></div>
+        </div>
+      </div>
+      <span class="pagenum">14</span>
+    </section>
+
+    <!-- 15. Свойства текста -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Часто используемые свойства</div>
+        <h2>Оформляем текст</h2>
+        <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:18px;flex:1;align-items:start">
+          <pre class="code"><span class="sel">p</span> {
+    <span class="prop">color</span>: <span class="val">rgb(0, 0, 255)</span>;
+    <span class="prop">background-color</span>: <span class="val">aqua</span>;
+    <span class="prop">font-size</span>: <span class="num">40px</span>;
+    <span class="prop">font-weight</span>: <span class="num">700</span>;
+    <span class="prop">font-style</span>: <span class="val">italic</span>;
+}</pre>
+          <ul class="clean">
+            <li><code>color</code> — цвет текста;</li>
+            <li><code>background-color</code> — цвет фона;</li>
+            <li><code>font-size</code> — размер: px, pt, em или слова small / medium / large;</li>
+            <li><code>font-weight</code> — насыщенность <b>100–900</b>, шаг 100 (700 = жирный);</li>
+            <li><code>font-style</code> — normal или italic.</li>
+          </ul>
+        </div>
+      </div>
+      <span class="pagenum">15</span>
+    </section>
+
+    <!-- 16. Отступы -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Часто используемые свойства</div>
+        <h2>Отступы: padding и margin</h2>
+        <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:18px;flex:1;align-items:center">
+          <div class="model">
+            <div class="m-margin"><span class="lbl">margin — внешние отступы</span>
+              <div class="m-border"><span class="lbl">border — граница</span>
+                <div class="m-padding"><span class="lbl">padding — внутренние отступы</span>
+                  <div class="m-content">содержимое элемента (текст)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ul class="clean">
+            <li><code>padding-left / -right / -top / -bottom</code> — поле <b>внутри</b> элемента, от края до содержимого;</li>
+            <li><code>margin-left / -right / -top / -bottom</code> — отступ <b>снаружи</b>, до соседних элементов.</li>
+          </ul>
+        </div>
+        <p class="lead" style="margin-top:12px">На практике чаще используют сокращённую запись: <code class="inline">padding: 10px 20px;</code> и <code class="inline">margin: 15px auto;</code></p>
+      </div>
+      <span class="pagenum">16</span>
+    </section>
+
+    <!-- 17. Размеры и рамки -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Часто используемые свойства</div>
+        <h2>Размеры и рамки</h2>
+        <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:18px;flex:1;align-items:start">
+          <ul class="clean">
+            <li><code>width</code> и <code>height</code> — ширина и высота <b>блочных</b> элементов (без границ и отступов);</li>
+            <li><code>border</code> — толщина, стиль и цвет границы одной строкой;</li>
+            <li>только одна сторона: <code>border-top</code>, <code>border-bottom</code>, <code>border-left</code>, <code>border-right</code>;</li>
+            <li><code>border-radius</code> — скругление уголков (без рамки скругляется фон).</li>
+          </ul>
+          <pre class="code"><span class="sel">.card</span> {
+    <span class="prop">width</span>: <span class="num">300px</span>;
+    <span class="prop">height</span>: <span class="num">150px</span>;
+    <span class="prop">border</span>: <span class="num">3px</span> <span class="val">solid navy</span>;
+    <span class="prop">border-radius</span>: <span class="num">12px</span>;
+}</pre>
+        </div>
+      </div>
+      <span class="pagenum">17</span>
+    </section>
+
+    <!-- 18. Сводка -->
+    <section class="slide finale">
+      <div class="content">
+        <div class="eyebrow">Подведём итог</div>
+        <div class="big">Сводка CSS-стилей <span>урока</span></div>
+        <p class="lead" style="margin-bottom:12px"><span class="freq hot">🔥 часто</span>&nbsp; <span class="freq mid">◆ иногда</span>&nbsp; <span class="freq low">○ редко</span></p>
+        <div class="taggrid" style="max-height:46vh;overflow:auto;padding-right:6px">
+          <div class="tg"><code>color</code><span>цвет текста</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>background-color</code><span>цвет фона элемента</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>font-size</code><span>размер шрифта</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>padding</code><span>внутренние отступы</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>margin</code><span>внешние отступы</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>width / height</code><span>ширина и высота блока</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>border</code><span>граница: толщина, стиль, цвет</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>border-radius</code><span>скругление уголков</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>.class</code><span>селектор класса — выборочный стиль</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>px</code><span>пиксели — основная единица</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>font-weight</code><span>насыщенность 100–900 (жирность)</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>%, em</code><span>относительные единицы</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>#HEX / rgb()</code><span>цвет числами (hex чаще)</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>font-style</code><span>italic — чаще хватает тега &lt;i&gt;</span><span class="freq low">○ реже</span></div>
+          <div class="tg"><code>pt, mm</code><span>пункты и миллиметры — для печати</span><span class="freq low">○ редко</span></div>
+          <div class="tg"><code>&lt;big&gt; &lt;small&gt; &lt;font&gt;</code><span>устаревшие теги — заменяем CSS!</span><span class="freq low">○ устарели</span></div>
+        </div>
+      </div>
+      <span class="pagenum">18</span>
+    </section>
+
+    <!-- 19. Финал -->
+    <section class="slide cover">
+      <span class="chip c1">🗄️</span><span class="chip c2">SQL</span><span class="chip c3">🚀</span>
+      <div class="kicker">В следующий раз…</div>
+      <h1>Базы данных<br><em>для сайтов</em></h1>
+      <p class="lead" style="margin-bottom:26px">Изучим основные принципы работы с базами данных для создания сайтов — и узнаем, откуда динамический сайт берёт информацию для страниц.</p>
+      <div class="tags">
+        <span class="pill done">HTML ✔</span>
+        <span class="pill done">CSS ✔</span>
+        <span class="pill t">SQL — скоро</span>
+        <span class="pill b">Динамические сайты</span>
+      </div>
+      <span class="pagenum">19</span>
+    </section>
+
+  </div>
+
+  <div class="nav">
+    <button class="btn" id="prev">← Назад</button>
+    <span class="hint">Листайте: клавиши ← → · пробел · клик по кнопкам · свайп на телефоне</span>
+    <button class="btn" id="next">Вперёд →</button>
+  </div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  const bar=document.getElementById('bar');
+  const counter=document.getElementById('counter');
+  const prevBtn=document.getElementById('prev');
+  const nextBtn=document.getElementById('next');
+  const DUR=720;
+  let cur=0, busy=false;
+
+  slides.forEach((s,i)=>{
+    s.style.transform='rotateY(0deg)';
+    s.style.display=(i===0)?'flex':'none';
+    s.style.zIndex=(i===0)?2:0;
+  });
+
+  function paint(n){
+    counter.textContent=(n+1)+' / '+total;
+    bar.style.width=(((n+1)/total)*100)+'%';
+    prevBtn.disabled=(n===0);
+    nextBtn.disabled=(n===total-1);
+  }
+
+  function go(n){
+    if(busy||n===cur||n<0||n>=total)return;
+    busy=true;
+    const dir=n>cur?1:-1;
+    const oldS=slides[cur], newS=slides[n];
+    paint(n);
+    newS.style.display='flex';
+
+    if(dir===1){
+      newS.style.zIndex=1; newS.style.transform='rotateY(0deg)';
+      oldS.style.zIndex=2; oldS.style.transform='rotateY(0deg)';
+      void oldS.offsetWidth;
+      oldS.style.transform='rotateY(-95deg)';
+    }else{
+      oldS.style.zIndex=1; oldS.style.transform='rotateY(0deg)';
+      newS.style.zIndex=2; newS.style.transform='rotateY(-95deg)';
+      void newS.offsetWidth;
+      newS.style.transform='rotateY(0deg)';
+    }
+
+    setTimeout(()=>{
+      oldS.style.display='none';
+      oldS.style.transform='rotateY(0deg)';
+      cur=n; busy=false; paint(cur);
+    },DUR);
+  }
+
+  prevBtn.onclick=()=>go(cur-1);
+  nextBtn.onclick=()=>go(cur+1);
+
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(cur+1);}
+    if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(cur-1);}
+    if(e.key==='Home'){e.preventDefault();go(0);}
+    if(e.key==='End'){e.preventDefault();go(total-1);}
+  });
+
+  let sx=null;
+  const book=document.getElementById('book');
+  book.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
+  book.addEventListener('touchend',e=>{
+    if(sx===null)return;
+    const dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>50){ dx<0?go(cur+1):go(cur-1); }
+    sx=null;
+  },{passive:true});
+
+  paint(0);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Схема связей БД викторин — точные связи по полям</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    color: #eee;
+    min-height: 100vh;
+    padding: 30px 20px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #ffd700;
+    margin-bottom: 10px;
+    font-size: 28px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #aaa;
+    margin-bottom: 30px;
+    font-size: 14px;
+  }
+
+  .schema-container {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 600px;
+  }
+
+  .connections-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .conn-line {
+    stroke-width: 3;
+    fill: none;
+    stroke-dasharray: 10 5;
+    animation: dash 1.5s linear infinite;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+
+  .conn-line.quiz-link {
+    stroke: #e74c3c;
+  }
+
+  .conn-line.question-link {
+    stroke: #3498db;
+  }
+
+  @keyframes dash {
+    to { stroke-dashoffset: -30; }
+  }
+
+  .conn-label-bg {
+    fill: #1a1a2e;
+    stroke-width: 2;
+    rx: 4;
+  }
+
+  .conn-label-bg.quiz-bg {
+    stroke: #e74c3c;
+  }
+
+  .conn-label-bg.question-bg {
+    stroke: #3498db;
+  }
+
+  .conn-label {
+    font-size: 13px;
+    font-weight: bold;
+    font-family: 'Consolas', monospace;
+  }
+
+  .tables-grid {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 2;
+  }
+
+  .table-card {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid #34495e;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 340px;
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .table-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(255,215,0,0.2);
+    border-color: #ffd700;
+  }
+
+  .table-header {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .table-icon {
+    font-size: 22px;
+  }
+
+  .table-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffd700;
+  }
+
+  .table-desc {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
+  }
+
+  .table-body {
+    padding: 8px 0;
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .field-row:hover {
+    background: rgba(255,215,0,0.08);
+  }
+
+  .field-row:last-child {
+    border-bottom: none;
+  }
+
+  .field-row.pk-highlight {
+    background: rgba(231,76,60,0.15);
+    border-left: 3px solid #e74c3c;
+  }
+
+  .field-row.fk-highlight {
+    background: rgba(52,152,219,0.15);
+    border-left: 3px solid #3498db;
+  }
+
+  .field-key {
+    width: 28px;
+    font-size: 11px;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  .field-key.pk {
+    color: #e74c3c;
+  }
+
+  .field-key.fk {
+    color: #3498db;
+  }
+
+  .field-name {
+    flex: 1;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    color: #ecf0f1;
+  }
+
+  .field-type {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: #95a5a6;
+    margin-left: 10px;
+  }
+
+  .field-null {
+    font-size: 11px;
+    color: #7f8c8d;
+    margin-left: 8px;
+  }
+
+  .relation-info {
+    max-width: 1200px;
+    margin: 30px auto 0;
+    background: rgba(255,215,0,0.08);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .relation-info h3 {
+    color: #ffd700;
+    margin-bottom: 12px;
+    font-size: 16px;
+  }
+
+  .relation-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .relation-item {
+    background: rgba(0,0,0,0.3);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Consolas', monospace;
+    flex: 1;
+    min-width: 300px;
+  }
+
+  .relation-item .rel-type {
+    color: #ffd700;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .relation-item .rel-detail {
+    color: #bbb;
+    font-size: 12px;
+  }
+
+  .legend {
+    max-width: 1200px;
+    margin: 20px auto 0;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+
+  .legend-color.pk { background: #e74c3c; }
+  .legend-color.fk { background: #3498db; }
+  .legend-color.rel-quiz {
+    background: transparent;
+    border: 2px dashed #e74c3c;
+    height: 10px;
+    width: 30px;
+  }
+  .legend-color.rel-question {
+    background: transparent;
+    border: 2px dashed #3498db;
+    height: 10px;
+    width: 30px;
+  }
+</style>
+</head>
+<body>
+
+<h1>️ Схема связей базы данных «Викторины»</h1>
+<p class="subtitle">Точные связи по полям внешних ключей</p>
+
+<div class="schema-container" id="schema">
+  <svg class="connections-svg" id="svg"></svg>
+
+  <div class="tables-grid">
+
+    <!-- Таблица quiz -->
+    <div class="table-card" id="tbl-quiz">
+      <div class="table-header">
+        <span class="table-icon"></span>
+        <div>
+          <div class="table-name">quiz</div>
+          <div class="table-desc">Справочник викторин</div>
+        </div>
+      </div>
+      <div class="table-body">
+        <div class="field-row pk-highlight" id="field-quiz-id">
+          <span class="field-key pk">🔑</span>
+          <span class="field-name">id</span>
+          <span class="field-type">INTEGER</span>
+          <span class="field-null">PK</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key"></span>
+          <span class="field-name">name</span>
+          <span class="field-type">VARCHAR</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Таблица question -->
+    <div class="table-card" id="tbl-question">
+      <div class="table-header">
+        <span class="table-icon">❓</span>
+        <div>
+          <div class="table-name">question</div>
+          <div class="table-desc">Банк вопросов</div>
+        </div>
+      </div>
+      <div class="table-body">
+        <div class="field-row pk-highlight" id="field-question-id">
+          <span class="field-key pk">🔑</span>
+          <span class="field-name">id</span>
+          <span class="field-type">INTEGER</span>
+          <span class="field-null">PK</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key"></span>
+          <span class="field-name">question</span>
+          <span class="field-type">VARCHAR</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key"></span>
+          <span class="field-name">answer</span>
+          <span class="field-type">VARCHAR</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key"></span>
+          <span class="field-name">wrong1</span>
+          <span class="field-type">VARCHAR</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key"></span>
+          <span class="field-name">wrong2</span>
+          <span class="field-type">VARCHAR</span>
+        </div>
+        <div class="field-row">
+          <span class="field-key"></span>
+          <span class="field-name">wrong3</span>
+          <span class="field-type">VARCHAR</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Таблица quiz_content -->
+  <div style="display:flex; justify-content:center; margin-top: 60px; position:relative; z-index:2;">
+    <div class="table-card" id="tbl-content" style="width:400px;">
+      <div class="table-header">
+        <span class="table-icon">🔗</span>
+        <div>
+          <div class="table-name">quiz_content</div>
+          <div class="table-desc">Связи викторин и вопросов (M:N)</div>
+        </div>
+      </div>
+      <div class="table-body">
+        <div class="field-row">
+          <span class="field-key pk">🔑</span>
+          <span class="field-name">id</span>
+          <span class="field-type">INTEGER</span>
+          <span class="field-null">PK</span>
+        </div>
+        <div class="field-row fk-highlight" id="field-content-quiz-id">
+          <span class="field-key fk">🔗</span>
+          <span class="field-name">quiz_id</span>
+          <span class="field-type">INTEGER</span>
+          <span class="field-null">FK → quiz.id</span>
+        </div>
+        <div class="field-row fk-highlight" id="field-content-question-id">
+          <span class="field-key fk">🔗</span>
+          <span class="field-name">question_id</span>
+          <span class="field-type">INTEGER</span>
+          <span class="field-null">FK → question.id</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="relation-info">
+  <h3>📐 Описание связей по полям</h3>
+  <div class="relation-list">
+    <div class="relation-item">
+      <span class="rel-type" style="color:#e74c3c">quiz.id ─── quiz_content.quiz_id</span>
+      <span class="rel-detail">Одна викторина (quiz) содержит много записей в quiz_content</span>
+    </div>
+    <div class="relation-item">
+      <span class="rel-type" style="color:#3498db">question.id ──── quiz_content.question_id</span>
+      <span class="rel-detail">Один вопрос (question) может входить в много записей quiz_content</span>
+    </div>
+    <div class="relation-item">
+      <span class="rel-type" style="color:#ffd700">quiz M ──── N question</span>
+      <span class="rel-detail">Связь «многие-ко-многим» через промежуточную таблицу quiz_content</span>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-color pk"></div>
+    <span><b style="color:#e74c3c">PK</b> — первичный ключ (подсвечен красным)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-color fk"></div>
+    <span><b style="color:#3498db">FK</b> — внешний ключ (подсвечен синим)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-color rel-quiz"></div>
+    <span>Связь quiz.id ↔ quiz_content.quiz_id</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-color rel-question"></div>
+    <span>Связь question.id ↔ quiz_content.question_id</span>
+  </div>
+</div>
+
+<script>
+  function drawConnections() {
+    const svg = document.getElementById('svg');
+    const container = document.getElementById('schema');
+    const containerRect = container.getBoundingClientRect();
+
+    // Получаем координаты конкретных полей
+    const quizId = document.getElementById('field-quiz-id').getBoundingClientRect();
+    const questionId = document.getElementById('field-question-id').getBoundingClientRect();
+    const contentQuizId = document.getElementById('field-content-quiz-id').getBoundingClientRect();
+    const contentQuestionId = document.getElementById('field-content-question-id').getBoundingClientRect();
+
+    // Точки соединения (правый край полей)
+    const quizIdRight = {
+      x: quizId.right - containerRect.left,
+      y: quizId.top + quizId.height / 2 - containerRect.top
+    };
+
+    const questionIdRight = {
+      x: questionId.right - containerRect.left,
+      y: questionId.top + questionId.height / 2 - containerRect.top
+    };
+
+    const contentQuizIdLeft = {
+      x: contentQuizId.left - containerRect.left,
+      y: contentQuizId.top + contentQuizId.height / 2 - containerRect.top
+    };
+
+    const contentQuestionIdLeft = {
+      x: contentQuestionId.left - containerRect.left,
+      y: contentQuestionId.top + contentQuestionId.height / 2 - containerRect.top
+    };
+
+    svg.innerHTML = '';
+
+    // Линия quiz.id -> quiz_content.quiz_id (красная)
+    const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const midX1 = (quizIdRight.x + contentQuizIdLeft.x) / 2;
+    path1.setAttribute('d', `M ${quizIdRight.x} ${quizIdRight.y} C ${midX1} ${quizIdRight.y}, ${midX1} ${contentQuizIdLeft.y}, ${contentQuizIdLeft.x} ${contentQuizIdLeft.y}`);
+    path1.setAttribute('class', 'conn-line quiz-link');
+    svg.appendChild(path1);
+
+    // Подпись для первой связи с фоном
+    const label1Text = 'quiz.id → quiz_content.quiz_id';
+    const label1X = midX1 - 100;
+    const label1Y = (quizIdRight.y + contentQuizIdLeft.y) / 2 - 10;
+    
+    const label1Bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    label1Bg.setAttribute('x', label1X - 5);
+    label1Bg.setAttribute('y', label1Y - 15);
+    label1Bg.setAttribute('width', 220);
+    label1Bg.setAttribute('height', 24);
+    label1Bg.setAttribute('class', 'conn-label-bg quiz-bg');
+    svg.appendChild(label1Bg);
+
+    const label1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label1.setAttribute('x', label1X);
+    label1.setAttribute('y', label1Y);
+    label1.setAttribute('class', 'conn-label');
+    label1.setAttribute('fill', '#e74c3c');
+    label1.textContent = label1Text;
+    svg.appendChild(label1);
+
+    // Линия question.id -> quiz_content.question_id (синяя)
+    const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const midX2 = (questionIdRight.x + contentQuestionIdLeft.x) / 2;
+    path2.setAttribute('d', `M ${questionIdRight.x} ${questionIdRight.y} C ${midX2} ${questionIdRight.y}, ${midX2} ${contentQuestionIdLeft.y}, ${contentQuestionIdLeft.x} ${contentQuestionIdLeft.y}`);
+    path2.setAttribute('class', 'conn-line question-link');
+    svg.appendChild(path2);
+
+    // Подпись для второй связи с фоном
+    const label2Text = 'question.id → quiz_content.question_id';
+    const label2X = midX2 - 120;
+    const label2Y = (questionIdRight.y + contentQuestionIdLeft.y) / 2 - 10;
+    
+    const label2Bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    label2Bg.setAttribute('x', label2X - 5);
+    label2Bg.setAttribute('y', label2Y - 15);
+    label2Bg.setAttribute('width', 260);
+    label2Bg.setAttribute('height', 24);
+    label2Bg.setAttribute('class', 'conn-label-bg question-bg');
+    svg.appendChild(label2Bg);
+
+    const label2 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label2.setAttribute('x', label2X);
+    label2.setAttribute('y', label2Y);
+    label2.setAttribute('class', 'conn-label');
+    label2.setAttribute('fill', '#3498db');
+    label2.textContent = label2Text;
+    svg.appendChild(label2);
+
+    // Точки на концах линий
+    [quizIdRight, contentQuizIdLeft, questionIdRight, contentQuestionIdLeft].forEach(p => {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', p.x);
+      circle.setAttribute('cy', p.y);
+      circle.setAttribute('r', 6);
+      circle.setAttribute('fill', '#ffd700');
+      circle.setAttribute('stroke', '#fff');
+      circle.setAttribute('stroke-width', 2);
+      svg.appendChild(circle);
+    });
+  }
+
+  drawConnections();
+  window.addEventListener('resize', drawConnections);
+</script>
+
+</body>
+</html>

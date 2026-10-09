@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Работа с базой данных (Модуль 5, Урок 3)</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dur:.7s;
+    --bg1:#101228; --bg2:#251a4a;
+    --paper:#fffdf7; --paper2:#f6efe1;
+    --ink:#1d1f38; --ink-soft:#4c4f6a;
+    --accent:#ff5a4e; --accent2:#14b8a6; --blue:#4361ee; --yellow:#ffcd42;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Manrope',system-ui,sans-serif;background:linear-gradient(160deg,var(--bg2),var(--bg1) 70%);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:20px}
+
+  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+  .bg::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1.2px,transparent 1.2px);background-size:28px 28px}
+  .blob{position:absolute;border-radius:50%;filter:blur(85px);opacity:.5}
+  .b1{width:520px;height:520px;background:#ff5a4e;top:-160px;left:-140px;animation:drift 16s ease-in-out infinite alternate}
+  .b2{width:640px;height:640px;background:#4361ee;bottom:-220px;right:-160px;animation:drift 21s ease-in-out infinite alternate-reverse}
+  .b3{width:420px;height:420px;background:#14b8a6;top:42%;left:56%;opacity:.3;animation:drift 14s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate(70px,45px) scale(1.12)}}
+
+  .topbar{width:min(1000px,95vw);display:flex;align-items:center;gap:16px;margin-bottom:14px}
+  .brand{font-family:'Unbounded';font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:#fff;white-space:nowrap;text-shadow:0 2px 14px rgba(255,90,78,.45)}
+  .progress{flex:1;height:6px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--yellow),var(--accent2));border-radius:99px;transition:width .4s ease}
+  .counter{font-variant-numeric:tabular-nums;font-size:14px;font-weight:700;min-width:60px;text-align:right;color:#fff}
+
+  .book{width:min(1000px,95vw);height:min(680px,calc(100vh - 180px));position:relative;perspective:1800px}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;
+    background:
+      radial-gradient(460px 280px at 108% -10%, rgba(67,97,238,.14), transparent 62%),
+      radial-gradient(420px 260px at -8% 110%, rgba(255,90,78,.12), transparent 62%),
+      linear-gradient(105deg,var(--paper2) 0%,var(--paper) 12%,var(--paper) 100%);
+    border-radius:6px 20px 20px 6px;
+    box-shadow:0 34px 70px -20px rgba(0,0,0,.6),0 2px 0 rgba(255,255,255,.5) inset;
+    transform-origin:left center;backface-visibility:hidden;
+    transition:transform var(--dur) cubic-bezier(.5,.05,.28,.99);overflow:hidden;
+    padding:clamp(24px,4.2vw,50px) clamp(24px,4.8vw,58px)}
+  .slide::before{content:"";position:absolute;left:0;top:0;bottom:0;width:26px;
+    background:linear-gradient(90deg,rgba(0,0,0,.20),rgba(0,0,0,.05) 55%,rgba(0,0,0,0));pointer-events:none}
+  .pagenum{position:absolute;bottom:14px;right:24px;font-size:13px;color:var(--ink-soft);font-weight:700}
+
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  .slide .content>*,.cover>*:not(.chip){animation:rise .55s cubic-bezier(.2,.7,.3,1) both}
+  .slide .content>*:nth-child(1),.cover>*:nth-child(1){animation-delay:.08s}
+  .slide .content>*:nth-child(2),.cover>*:nth-child(2){animation-delay:.16s}
+  .slide .content>*:nth-child(3),.cover>*:nth-child(3){animation-delay:.24s}
+  .slide .content>*:nth-child(4),.cover>*:nth-child(4){animation-delay:.32s}
+  .slide .content>*:nth-child(5),.cover>*:nth-child(5){animation-delay:.40s}
+  .slide .content>*:nth-child(6),.cover>*:nth-child(6){animation-delay:.48s}
+
+  .eyebrow{font-family:'Unbounded';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:28px;height:3px;background:linear-gradient(90deg,var(--accent),var(--yellow));border-radius:3px}
+  h1{font-family:'Unbounded';font-weight:900;line-height:1.04}
+  h2{font-family:'Unbounded';font-weight:700;font-size:clamp(23px,3.4vw,36px);line-height:1.12;margin-bottom:clamp(12px,2.2vh,22px)}
+  p.lead{font-size:clamp(16.5px,2.15vw,21px);line-height:1.55;color:var(--ink-soft);max-width:64ch;font-weight:500}
+  p.lead b{color:var(--ink)}
+  .content{flex:1;display:flex;flex-direction:column;min-height:0}
+
+  .hl{background:linear-gradient(transparent 56%,rgba(255,205,66,.9) 56%);padding:0 3px;border-radius:2px;color:var(--ink)}
+  .hl-t{background:linear-gradient(transparent 56%,rgba(20,184,166,.45) 56%);padding:0 3px;color:var(--ink)}
+  .hl-b{background:linear-gradient(transparent 56%,rgba(67,97,238,.35) 56%);padding:0 3px;color:var(--ink)}
+
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:#fff;border:1.5px solid #eee3d4;border-radius:18px;padding:16px 18px;
+    box-shadow:0 10px 26px -16px rgba(29,31,56,.4);transition:transform .25s}
+  .card:hover{transform:translateY(-3px)}
+  .card h3{font-size:clamp(16px,2vw,19px);font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',Consolas,monospace}
+  .card p{font-size:clamp(14.5px,1.85vw,17.5px);line-height:1.5;color:var(--ink-soft);font-weight:500}
+  .card p b{color:var(--ink)}
+  .card.sm{padding:11px 15px}
+  .card.sm h3{font-size:15px;margin-bottom:3px}
+  .card.sm p{font-size:13.5px}
+  .tint-b{background:linear-gradient(135deg,#eef1ff,#fff 65%);border-color:#dbe4ff}
+  .tint-a{background:linear-gradient(135deg,#fff0ee,#fff 65%);border-color:#ffdfdb}
+  .tint-t{background:linear-gradient(135deg,#e7faf6,#fff 65%);border-color:#c9f1e9}
+  .card ul{list-style:none;margin-top:6px}
+  .card ul li{font-size:clamp(14px,1.8vw,16.5px);padding:3px 0 3px 20px;position:relative;color:var(--ink-soft);font-weight:600}
+  .card ul li::before{content:"›";position:absolute;left:4px;color:var(--blue);font-weight:800}
+
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:11px}
+  ul.clean li{position:relative;padding-left:30px;font-size:clamp(16px,2.05vw,19.5px);line-height:1.5;color:var(--ink);font-weight:600}
+  ul.clean li::before{content:"";position:absolute;left:0;top:9px;width:11px;height:11px;border-radius:4px;background:linear-gradient(135deg,var(--accent),var(--yellow));transform:rotate(45deg)}
+  ul.clean li b{color:var(--blue)}
+  ul.clean li code{font-family:'JetBrains Mono',Consolas,monospace;font-size:.92em}
+
+  pre.code{background:#191c30;color:#eef0ff;border-radius:14px;padding:15px 20px;
+    font-family:'JetBrains Mono',Consolas,monospace;font-size:clamp(12.5px,1.7vw,15.5px);line-height:1.62;overflow:auto;
+    border:1px solid #2c3050;box-shadow:0 12px 28px -16px rgba(0,0,0,.5)}
+  pre.code .kw{color:#c792ea;font-weight:700}
+  pre.code .tag{color:#7ee0d2;font-weight:700}
+  pre.code .attr{color:#ffb86b}
+  pre.code .str{color:#a5d6a7}
+  pre.code .num{color:#f78c6c}
+  pre.code .cls{color:#7ee0d2;font-weight:700}
+  pre.code .fn{color:#82aaff;font-weight:700}
+  pre.code .cmt{color:#8a8fb5;font-style:italic}
+  pre.code .bad{color:#ff8a80;font-weight:700}
+  pre.code .good{color:#69f0ae;font-weight:700}
+  pre.mini{font-size:clamp(11.5px,1.4vw,13px);padding:9px 12px;line-height:1.5;margin:8px 0}
+  code.inline{background:#f3ead8;color:#c03a2b;padding:2px 8px;border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:.9em;font-weight:700}
+
+  .cover{justify-content:center}
+  .cover .kicker{font-family:'Unbounded';font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:20px;font-weight:700}
+  .cover h1{font-size:clamp(30px,5.4vw,58px);margin-bottom:22px}
+  .cover h1 em{font-style:normal;background:linear-gradient(92deg,var(--accent),#ff9f2e);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cover .tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .pill{font-size:14px;font-weight:800;padding:9px 16px;border-radius:99px;background:#fff;border:1.5px solid #eadfc9;color:var(--ink);box-shadow:0 6px 16px -10px rgba(29,31,56,.4)}
+  .pill.a{background:linear-gradient(92deg,var(--accent),#ff8a3a);color:#fff;border-color:transparent}
+  .pill.b{background:linear-gradient(92deg,var(--blue),#7aa5ff);color:#fff;border-color:transparent}
+  .pill.t{background:linear-gradient(92deg,var(--accent2),#5eead4);color:#06332e;border-color:transparent}
+  .pill.done{opacity:.55;text-decoration:line-through}
+  .chip{position:absolute;display:grid;place-items:center;width:66px;height:66px;border-radius:20px;background:#fff;
+    box-shadow:0 16px 34px -14px rgba(29,31,56,.5);font-size:30px;animation:bob 6s ease-in-out infinite}
+  .chip.c1{top:13%;right:10%;transform:rotate(9deg)}
+  .chip.c2{bottom:16%;right:24%;animation-delay:1.2s;background:linear-gradient(135deg,var(--accent),#ff9f2e);color:#fff;font-family:'Unbounded';font-size:17px;font-weight:900}
+  .chip.c3{top:24%;right:31%;animation-delay:.6s;background:linear-gradient(135deg,var(--blue),#7aa5ff)}
+  @keyframes bob{50%{translate:0 -14px}}
+
+  .steps{display:flex;flex-direction:column;gap:10px;counter-reset:s}
+  .step{display:flex;gap:15px;align-items:flex-start;background:#fff;border:1.5px solid #eee3d4;border-radius:14px;padding:10px 18px;box-shadow:0 8px 20px -14px rgba(29,31,56,.4)}
+  .step i{counter-increment:s;font-style:normal;font-family:'Unbounded';font-weight:700;font-size:15px;color:#fff;
+    background:linear-gradient(135deg,var(--blue),#7aa5ff);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 6px 14px -6px rgba(67,97,238,.7)}
+  .step p{font-size:clamp(15px,1.95vw,18.5px);line-height:1.5;color:var(--ink);font-weight:600}
+  .step p b{color:var(--blue)}
+  .step p code{font-family:'JetBrains Mono',monospace;font-size:.9em;background:#f3ead8;color:#c03a2b;padding:1px 6px;border-radius:6px}
+
+  .kv{display:flex;gap:14px;align-items:baseline;background:#fff;border-left:5px solid var(--accent2);border-radius:12px;padding:10px 18px;margin-bottom:10px;box-shadow:0 8px 20px -14px rgba(29,31,56,.4)}
+  .kv code{font-family:'JetBrains Mono',monospace;font-weight:700;color:#0f766e;font-size:clamp(13.5px,1.7vw,16px);min-width:300px;flex:none}
+  .kv span{font-size:clamp(14.5px,1.85vw,17.5px);color:var(--ink-soft);font-weight:600}
+  .kv span b{color:var(--ink)}
+
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;
+    box-shadow:0 10px 26px -16px rgba(29,31,56,.4);margin-bottom:12px}
+  .tbl th{background:linear-gradient(135deg,var(--blue),#7aa5ff);color:#fff;padding:10px 16px;
+    font-size:clamp(12.5px,1.6vw,15px);text-align:left;font-weight:800}
+  .tbl td{padding:8px 16px;border-top:1px solid #f0e8d8;font-size:clamp(12.5px,1.6vw,15px);font-weight:600;color:var(--ink-soft)}
+  .tbl tr:nth-child(even) td{background:#faf6ee}
+  .tbl td b{color:var(--ink)}
+
+  .taggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+  .tg{background:#fff;border:1.5px solid #eee3d4;border-radius:13px;padding:11px 14px;display:flex;flex-direction:column;gap:3px}
+  .tg code{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--blue);font-size:14px}
+  .tg span{font-size:13px;color:var(--ink-soft);line-height:1.4;font-weight:600}
+  .freq{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;width:max-content;margin-top:4px}
+  .freq.hot{background:#ffe8d6;color:#c2410c}
+  .freq.mid{background:#e0e7ff;color:#3730a3}
+  .freq.low{background:#f1f5f9;color:#64748b}
+
+  .finale .big{font-family:'Unbounded';font-weight:900;font-size:clamp(24px,3.8vw,42px);line-height:1.12;margin-bottom:16px}
+  .finale .big span{background:linear-gradient(92deg,var(--accent2),#5eead4);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .nav{width:min(1000px,95vw);display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+  .btn{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+    background:linear-gradient(92deg,var(--accent),#ff8a3a);border:none;color:#fff;
+    padding:13px 24px;border-radius:99px;font-family:'Manrope';font-weight:800;font-size:15px;
+    box-shadow:0 12px 26px -12px rgba(255,90,78,.7);transition:.2s}
+  .btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 16px 32px -12px rgba(255,90,78,.85)}
+  .btn:disabled{opacity:.3;cursor:default;box-shadow:none}
+  .hint{color:#aab0d8;font-size:13px;font-weight:600}
+  @media(max-width:720px){
+    .hint{display:none}.g2,.g3{grid-template-columns:1fr}
+    .chip{display:none}.kv{flex-direction:column;gap:4px}.kv code{min-width:0}
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <div class="topbar">
+    <span class="brand">М5·У3 · Работа с базой данных</span>
+    <div class="progress"><i id="bar"></i></div>
+    <span class="counter" id="counter">1 / 18</span>
+  </div>
+
+  <div class="book" id="book">
+
+    <!-- 1. Титул -->
+    <section class="slide cover">
+      <span class="chip c1">🗄️</span><span class="chip c2">SQL</span><span class="chip c3">🐍</span>
+      <div class="kicker">Модуль 5 · Урок 3</div>
+      <h1>Работа с базой<br><em>данных</em></h1>
+      <p class="lead" style="margin-bottom:26px">Как сделать так, чтобы каждый посетитель сайта видел собственный контент: храним данные и управляем ими с помощью SQL из Python.</p>
+      <div class="tags">
+        <span class="pill a">SQL</span>
+        <span class="pill t">SQLite</span>
+        <span class="pill b">sqlite3 · Python</span>
+      </div>
+      <span class="pagenum">01</span>
+    </section>
+
+    <!-- 2. Повторение -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Повторение</div>
+        <h2>Что мы уже умеем</h2>
+        <p class="lead" style="margin-bottom:14px">Мы научились создавать и оформлять веб-страницы:</p>
+        <ul class="clean">
+          <li><b>HTML</b> — структура: заголовки, абзацы, списки, ссылки;</li>
+          <li><b>CSS</b> — оформление: цвета, шрифты, отступы, рамки;</li>
+          <li><b>классы CSS</b> — выборочное оформление элементов.</li>
+        </ul>
+        <p class="lead" style="margin-top:16px"><b class="hl">Но наш сайт пока статический: каждый посетитель получает одну и ту же страницу.</b></p>
+      </div>
+      <span class="pagenum">02</span>
+    </section>
+
+    <!-- 3. Обсуждение -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Обсуждение</div>
+        <h2>Хранение данных на сайте</h2>
+        <p class="lead" style="margin-bottom:16px">Пока в браузер каждый раз загружается <span class="hl-b">один и тот же документ</span>.</p>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-b"><h3 style="font-family:'Manrope'">🤔 Вопрос</h3><p>Что нужно добавить в проект, чтобы содержимое страницы <b>менялось в зависимости от ситуации</b>?</p></div>
+          <div class="card tint-t"><h3 style="font-family:'Manrope'">💡 Идея</h3><p>Нужно место, где <b>живут данные</b>, и способ <b>запрашивать</b> их по мере необходимости!</p></div>
+        </div>
+      </div>
+      <span class="pagenum">03</span>
+    </section>
+
+    <!-- 4. План урока -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">План на сегодня</div>
+        <h2>Четыре шага к динамическому сайту</h2>
+        <div class="steps">
+          <div class="step"><i></i><p>Организовать <b>хранение информации</b>, которая наполняет страницы содержимым.</p></div>
+          <div class="step"><i></i><p>Получать от пользователя <b>запросы</b> о том, какая именно информация нужна.</p></div>
+          <div class="step"><i></i><p>На основе запросов <b>получать информацию</b> из хранилища.</p></div>
+          <div class="step"><i></i><p><b>Формировать содержание страниц</b> на основе полученной информации.</p></div>
+        </div>
+      </div>
+      <span class="pagenum">04</span>
+    </section>
+
+    <!-- 5. База данных -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Что такое база данных?</h2>
+        <p class="lead" style="margin-bottom:14px"><b>База данных (БД)</b> — информация, хранящаяся <span class="hl">упорядоченным способом</span> и предназначенная для определённой цели.</p>
+        <div class="kv"><code>СУБД</code><span><b>Система управления базами данных</b> — программа для создания БД и работы с ними.</span></div>
+        <div class="kv"><code>SQL</code><span><b>Structured Query Language</b> — язык структурированных запросов: им читают и записывают данные в БД.</span></div>
+        <p class="lead" style="margin-top:12px">Простейшая схема: программа → <b>SQL-запрос</b> → СУБД → база данных.</p>
+      </div>
+      <span class="pagenum">05</span>
+    </section>
+
+    <!-- 6. Проект -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Идея проекта</div>
+        <h2>Социальное предпринимательство: сайт викторин</h2>
+        <p class="lead" style="margin-bottom:14px">Поможем школе проводить <span class="hl-t">викторины</span> — создадим для них сайт!</p>
+        <div class="grid g3" style="flex:1">
+          <div class="card tint-b"><h3 style="font-family:'Manrope'">🎯 Идея</h3><p>Каждый посетитель отвечает на <b>10 вопросов</b>, выбранных случайным образом.</p></div>
+          <div class="card tint-t"><h3 style="font-family:'Manrope'">🗄️ Хранение</h3><p>Все вопросы и варианты ответов лежат <b>в базе данных</b>.</p></div>
+          <div class="card tint-a"><h3 style="font-family:'Manrope'">⚙️ Механика</h3><p>Веб-приложение считывает вопрос и варианты из БД и размещает их на странице <b>перемешанными</b>.</p></div>
+        </div>
+      </div>
+      <span class="pagenum">06</span>
+    </section>
+
+    <!-- 7. Устройство БД -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Новая тема</div>
+        <h2>Как устроена база данных?</h2>
+        <p class="lead" style="margin-bottom:12px">Информация в БД хранится в <span class="hl">таблицах</span>. Одна база может состоять из нескольких таблиц.</p>
+        <table class="tbl">
+          <tr><th>Название игры</th><th>Год</th><th>Игроков</th><th>Первый ведущий</th></tr>
+          <tr><td>«Что? Где? Когда?»</td><td>1975</td><td>6</td><td>Владимир Ворошилов</td></tr>
+          <tr><td>«Поле чудес»</td><td>1990</td><td>9</td><td>Владислав Листьев</td></tr>
+          <tr><td>«Брейн-ринг»</td><td>1990</td><td>12</td><td>Владимир Ворошилов</td></tr>
+          <tr><td>«Колесо истории»</td><td>1996</td><td>3</td><td>Леонид Якубович</td></tr>
+          <tr><td>«Слабое звено»</td><td>2001</td><td>8</td><td>Мария Киселёва</td></tr>
+        </table>
+        <div class="grid g2">
+          <div class="kv" style="margin:0"><code>Запись</code><span><b>строка</b> таблицы — информация об одном объекте</span></div>
+          <div class="kv" style="margin:0"><code>Поле</code><span><b>столбец</b> — одно свойство объекта</span></div>
+        </div>
+      </div>
+      <span class="pagenum">07</span>
+    </section>
+
+    <!-- 8. SQL операторы -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Знакомство с SQL</div>
+        <h2>Основные операторы SQL</h2>
+        <p class="lead" style="margin-bottom:12px"><b>SQLite</b> — встраиваемая СУБД (база хранится в обычном файле). В Python с ней работает модуль <code class="inline">sqlite3</code>.</p>
+        <div class="grid g2">
+          <div class="card tint-b sm"><h3>SELECT</h3><p>выбирает данные, удовлетворяющие условиям 🔥</p></div>
+          <div class="card tint-t sm"><h3>INSERT</h3><p>добавляет новые записи</p></div>
+          <div class="card tint-a sm"><h3>UPDATE</h3><p>изменяет существующие данные</p></div>
+          <div class="card tint-a sm"><h3>DELETE</h3><p>удаляет данные</p></div>
+          <div class="card tint-t sm"><h3>CREATE</h3><p>создаёт объекты БД, например таблицы</p></div>
+        </div>
+      </div>
+      <span class="pagenum">08</span>
+    </section>
+
+    <!-- 9. CREATE TABLE -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Команды SQL</div>
+        <h2>Создание таблицы — CREATE TABLE</h2>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:18px;flex:1;align-items:start">
+          <pre class="code"><span class="kw">CREATE TABLE</span> <span class="cls">questions</span> (
+    question         <span class="attr">TEXT</span>,
+    max_score        <span class="attr">INT</span>,
+    correct_answer   <span class="attr">TEXT</span>,
+    incorrect_answer <span class="attr">TEXT</span>
+);</pre>
+          <ul class="clean">
+            <li>указываем <b>имя таблицы</b>;</li>
+            <li>в скобках — <b>столбцы и их типы</b>: <code>TEXT</code> — текст, <code>INT</code> — целое число;</li>
+            <li>имена — <b>строчными буквами</b>, слова через подчёркивание: <code>max_score</code>.</li>
+          </ul>
+        </div>
+      </div>
+      <span class="pagenum">09</span>
+    </section>
+
+    <!-- 10. INSERT -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Команды SQL</div>
+        <h2>Добавление записей — INSERT INTO</h2>
+        <pre class="code" style="margin-bottom:14px"><span class="kw">INSERT INTO</span> <span class="cls">questions</span>
+    (question, max_score, correct_answer, incorrect_answer)
+<span class="kw">VALUES</span> (<span class="str">'2x2=4'</span>, <span class="num">1</span>, <span class="str">'Верно'</span>, <span class="str">'Неверно'</span>);</pre>
+        <ul class="clean">
+          <li>после <code>INSERT INTO</code> — имя таблицы;</li>
+          <li>в скобках — столбцы, которые заполняем;</li>
+          <li>после <code>VALUES</code> — значения <b>в том же порядке</b>.</li>
+        </ul>
+      </div>
+      <span class="pagenum">10</span>
+    </section>
+
+    <!-- 11. SELECT -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Команды SQL</div>
+        <h2>Получение данных — SELECT</h2>
+        <pre class="code" style="margin-bottom:14px"><span class="kw">SELECT</span> &lt;что&gt; <span class="kw">FROM</span> &lt;откуда&gt; <span class="kw">WHERE</span> &lt;условия&gt;;</pre>
+        <div class="kv"><code>SELECT * FROM questions</code><span>все данные из таблицы (<b>*</b> — «все столбцы»)</span></div>
+        <div class="kv"><code>SELECT question, correct_answer FROM questions</code><span>только вопросы и правильные ответы</span></div>
+        <div class="kv"><code>SELECT * FROM questions WHERE max_score &gt; 2</code><span>вопросы дороже двух баллов</span></div>
+      </div>
+      <span class="pagenum">11</span>
+    </section>
+
+    <!-- 12. Условия и сортировка -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Команды SQL</div>
+        <h2>Условия и сортировка</h2>
+        <div class="grid g2" style="margin-bottom:14px">
+          <div class="card tint-b"><h3 style="font-family:'Manrope'">🧮 Условия в WHERE</h3>
+            <ul><li>сравнение текста;</li><li>сравнение чисел;</li><li>логика: <b>AND</b> (и), <b>OR</b> (или), <b>NOT</b> (не).</li></ul></div>
+          <div class="card tint-t"><h3 style="font-family:'Manrope'">📶 Сортировка ORDER BY</h3>
+            <p>Упорядочивает результаты запроса. По умолчанию — <b>по возрастанию</b>.</p></div>
+        </div>
+        <pre class="code"><span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="cls">questions</span> <span class="kw">ORDER BY</span> max_score;
+<span class="cmt">-- вопросы в порядке возрастания стоимости</span></pre>
+      </div>
+      <span class="pagenum">12</span>
+    </section>
+
+    <!-- 13. SQL + Python порядок -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">SQL + Python</div>
+        <h2>Модуль sqlite3: порядок действий</h2>
+        <p class="lead" style="margin-bottom:14px">Мы программируем на Python — как добавить команды работы с базой в код?</p>
+        <div class="steps">
+          <div class="step"><i></i><p>Подключить модуль <code>sqlite3</code>.</p></div>
+          <div class="step"><i></i><p>Установить <b>соединение</b> с базой данных.</p></div>
+          <div class="step"><i></i><p>Создать <b>курсор</b> — объект для отправки запросов.</p></div>
+          <div class="step"><i></i><p>Выполнить запрос и <b>сохранить результат</b> в переменную.</p></div>
+          <div class="step"><i></i><p><b>Сохранить изменения</b> в базе данных.</p></div>
+        </div>
+      </div>
+      <span class="pagenum">13</span>
+    </section>
+
+    <!-- 14. Соединение и курсор -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">SQL + Python</div>
+        <h2>Соединение и курсор</h2>
+        <pre class="code" style="margin-bottom:14px"><span class="kw">import</span> sqlite3
+
+conn = sqlite3.<span class="fn">connect</span>(<span class="str">"questions.db"</span>)  <span class="cmt"># база — в файле questions.db</span>
+cursor = conn.<span class="fn">cursor</span>()               <span class="cmt"># объект для отправки запросов</span></pre>
+        <div class="grid g2">
+          <div class="kv" style="margin:0"><code>connect(файл)</code><span>создаёт объект-соединение с базой</span></div>
+          <div class="kv" style="margin:0"><code>cursor()</code><span>курсор — «посыльный» для запросов</span></div>
+        </div>
+      </div>
+      <span class="pagenum">14</span>
+    </section>
+
+    <!-- 15. execute + fetchall + commit -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">SQL + Python</div>
+        <h2>Выполнение запроса и результат</h2>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:18px;flex:1;align-items:start">
+          <pre class="code">cursor.<span class="fn">execute</span>(<span class="str">'SELECT *
+    FROM questions
+    WHERE max_score &gt; 2'</span>)
+
+data = cursor.<span class="fn">fetchall</span>()
+conn.<span class="fn">commit</span>()
+
+<span class="fn">print</span>(data)</pre>
+          <ul class="clean">
+            <li><code>execute()</code> — выполняет запрос; многострочный текст — в <b>тройных кавычках</b>;</li>
+            <li><code>fetchall()</code> — собирает результат в <b>список кортежей</b>: каждый кортеж — одна запись;</li>
+            <li><code>commit()</code> — сохраняет изменения в базе.</li>
+          </ul>
+        </div>
+        <p class="lead" style="margin-top:12px">Результат: <code class="inline">[('Ep = mgh', 3, 'Верно', 'Неверно'), ('Куликовская битва', 3, '1380', '1242'), …]</code></p>
+      </div>
+      <span class="pagenum">15</span>
+    </section>
+
+    <!-- 16. Плейсхолдеры -->
+    <section class="slide">
+      <div class="content">
+        <div class="eyebrow">Безопасность</div>
+        <h2>Как вставить переменную в запрос?</h2>
+        <div class="grid g2" style="flex:1">
+          <div class="card tint-a"><h3 style="font-family:'Manrope'">⚠️ Способ 1: конкатенация</h3>
+            <pre class="code mini"><span class="bad">query = 'SELECT * FROM questions
+    WHERE max_score &gt; ' + str(score)</span>
+cursor.execute(query)</pre>
+            <p><b>Опасно!</b> Сайт уязвим к <b>SQL-инъекциям</b> — запуску вредоносного SQL-кода.</p></div>
+          <div class="card tint-t"><h3 style="font-family:'Manrope'">✅ Способ 2: плейсхолдеры</h3>
+            <pre class="code mini"><span class="good">cursor.execute('SELECT * FROM questions
+    WHERE max_score &gt; (?)', [score])</span></pre>
+            <p><b>Отлично!</b> Злоумышленник не сможет подставить вредоносный код.</p></div>
+        </div>
+        <p class="lead" style="margin-top:12px"><code class="inline">(?)</code> — плейсхолдер «держит место»; переменные из списка подставляются <b>по порядку</b>. Плейсхолдеров может быть несколько.</p>
+      </div>
+      <span class="pagenum">16</span>
+    </section>
+
+    <!-- 17. Сводка -->
+    <section class="slide finale">
+      <div class="content">
+        <div class="eyebrow">Подведём итог</div>
+        <div class="big">Словарь <span>урока</span></div>
+        <p class="lead" style="margin-bottom:12px"><span class="freq hot">🔥 часто</span>&nbsp; <span class="freq mid">◆ иногда</span>&nbsp; <span class="freq low">○ упомянуто</span></p>
+        <div class="taggrid" style="max-height:46vh;overflow:auto;padding-right:6px">
+          <div class="tg"><code>SELECT … FROM</code><span>получить данные из таблицы</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>WHERE</code><span>фильтр данных по условию</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>INSERT INTO … VALUES</code><span>добавить запись</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>sqlite3.connect(файл)</code><span>соединение с базой</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>conn.cursor()</code><span>курсор для запросов</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>cursor.execute(запрос)</code><span>выполнить SQL-запрос</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>cursor.fetchall()</code><span>результат — список кортежей</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>conn.commit()</code><span>сохранить изменения</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>(?) + [переменные]</code><span>безопасная подстановка значений</span><span class="freq hot">🔥 часто</span></div>
+          <div class="tg"><code>CREATE TABLE</code><span>создать таблицу</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>ORDER BY</code><span>сортировка результатов</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>AND / OR / NOT</code><span>логические условия</span><span class="freq mid">◆ иногда</span></div>
+          <div class="tg"><code>UPDATE</code><span>изменить данные</span><span class="freq low">○ упомянуто</span></div>
+          <div class="tg"><code>DELETE</code><span>удалить данные</span><span class="freq low">○ упомянуто</span></div>
+        </div>
+      </div>
+      <span class="pagenum">17</span>
+    </section>
+
+    <!-- 18. Финал -->
+    <section class="slide cover">
+      <span class="chip c1">🧠</span><span class="chip c2">БД</span><span class="chip c3">🚀</span>
+      <div class="kicker">В следующий раз…</div>
+      <h1>Создаём<br><em>собственные базы данных!</em></h1>
+      <p class="lead" style="margin-bottom:26px">Научимся проектировать и использовать собственные базы данных — и подключим их к нашему сайту викторин.</p>
+      <div class="tags">
+        <span class="pill done">HTML ✔</span>
+        <span class="pill done">CSS ✔</span>
+        <span class="pill done">SQL · основы ✔</span>
+        <span class="pill t">Свои БД — скоро</span>
+      </div>
+      <span class="pagenum">18</span>
+    </section>
+
+  </div>
+
+  <div class="nav">
+    <button class="btn" id="prev">← Назад</button>
+    <span class="hint">Листайте: клавиши ← → · пробел · клик по кнопкам · свайп на телефоне</span>
+    <button class="btn" id="next">Вперёд →</button>
+  </div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  const bar=document.getElementById('bar');
+  const counter=document.getElementById('counter');
+  const prevBtn=document.getElementById('prev');
+  const nextBtn=document.getElementById('next');
+  const DUR=720;
+  let cur=0, busy=false;
+
+  slides.forEach((s,i)=>{
+    s.style.transform='rotateY(0deg)';
+    s.style.display=(i===0)?'flex':'none';
+    s.style.zIndex=(i===0)?2:0;
+  });
+
+  function paint(n){
+    counter.textContent=(n+1)+' / '+total;
+    bar.style.width=(((n+1)/total)*100)+'%';
+    prevBtn.disabled=(n===0);
+    nextBtn.disabled=(n===total-1);
+  }
+
+  function go(n){
+    if(busy||n===cur||n<0||n>=total)return;
+    busy=true;
+    const dir=n>cur?1:-1;
+    const oldS=slides[cur], newS=slides[n];
+    paint(n);
+    newS.style.display='flex';
+
+    if(dir===1){
+      newS.style.zIndex=1; newS.style.transform='rotateY(0deg)';
+      oldS.style.zIndex=2; oldS.style.transform='rotateY(0deg)';
+      void oldS.offsetWidth;
+      oldS.style.transform='rotateY(-95deg)';
+    }else{
+      oldS.style.zIndex=1; oldS.style.transform='rotateY(0deg)';
+      newS.style.zIndex=2; newS.style.transform='rotateY(-95deg)';
+      void newS.offsetWidth;
+      newS.style.transform='rotateY(0deg)';
+    }
+
+    setTimeout(()=>{
+      oldS.style.display='none';
+      oldS.style.transform='rotateY(0deg)';
+      cur=n; busy=false; paint(cur);
+    },DUR);
+  }
+
+  prevBtn.onclick=()=>go(cur-1);
+  nextBtn.onclick=()=>go(cur+1);
+
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();go(cur+1);}
+    if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(cur-1);}
+    if(e.key==='Home'){e.preventDefault();go(0);}
+    if(e.key==='End'){e.preventDefault();go(total-1);}
+  });
+
+  let sx=null;
+  const book=document.getElementById('book');
+  book.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
+  book.addEventListener('touchend',e=>{
+    if(sx===null)return;
+    const dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>50){ dx<0?go(cur+1):go(cur-1); }
+    sx=null;
+  },{passive:true});
+
+  paint(0);
+})();
+</script>
+</body>
+</html>

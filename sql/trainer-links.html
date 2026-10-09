@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Тренажёр add_links() — добавление связей</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #eee;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #ffd700;
+    font-size: 20px;
+    margin-bottom: 3px;
+    flex-shrink: 0;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #aaa;
+    font-size: 12px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .main-layout {
+    display: flex;
+    flex: 1;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  /* Левая панель — код */
+  .code-panel {
+    width: 300px;
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .code-panel h3 {
+    color: #ffd700;
+    font-size: 14px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .code-block {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: #0f0;
+    line-height: 1.5;
+    white-space: pre;
+    flex: 1;
+  }
+
+  .code-block .kw { color: #c678dd; }
+  .code-block .str { color: #98c379; }
+  .code-block .fn { color: #61afef; }
+  .code-block .cm { color: #7f8c8d; font-style: italic; }
+
+  .code-explanation {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #444;
+    font-size: 11px;
+    color: #bbb;
+    line-height: 1.5;
+    flex-shrink: 0;
+  }
+
+  .code-explanation b { color: #ffd700; }
+
+  /* Правая панель — таблицы и управление */
+  .right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .tables-area {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .svg-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .tables-top {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .table-card {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid #444;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 320px;
+    transition: border-color 0.3s;
+  }
+
+  .table-card.highlight {
+    border-color: #ffd700;
+    box-shadow: 0 0 20px rgba(255,215,0,0.3);
+  }
+
+  .table-header {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  .table-header.quiz-h { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+  .table-header.question-h { background: linear-gradient(135deg, #2471a3, #3498db); }
+  .table-header.content-h { background: linear-gradient(135deg, #b7950b, #f1c40f); color: #222; }
+
+  .table-body {
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .table-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .table-body th {
+    background: rgba(0,0,0,0.4);
+    padding: 5px 7px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    font-size: 11px;
+    color: #ffd700;
+  }
+
+  .table-body td {
+    padding: 4px 7px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .table-body tr.new-row {
+    animation: flashRow 1.5s ease;
+  }
+
+  @keyframes flashRow {
+    0% { background: rgba(255,215,0,0.6); }
+    100% { background: transparent; }
+  }
+
+  .content-row .link-quiz { color: #e74c3c; font-weight: bold; }
+  .content-row .link-question { color: #3498db; font-weight: bold; }
+
+  .tables-bottom {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .table-card.content-card {
+    width: 380px;
+  }
+
+  /* Панель управления */
+  .control-panel {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid #ffd700;
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 12px;
+    flex-shrink: 0;
+  }
+
+  .control-panel h3 {
+    color: #ffd700;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .input-group label {
+    font-size: 12px;
+    color: #bbb;
+  }
+
+  .input-group input {
+    padding: 6px 10px;
+    background: #1a1a1a;
+    color: #0f0;
+    border: 2px solid #444;
+    border-radius: 5px;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    width: 100px;
+  }
+
+  .input-group input:focus {
+    outline: none;
+    border-color: #ffd700;
+  }
+
+  .btn {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: 0.2s;
+  }
+
+  .btn-add { background: #27ae60; color: white; }
+  .btn-add:hover { background: #2ecc71; }
+  .btn-add:disabled { background: #555; cursor: not-allowed; }
+
+  .btn-reset { background: #e74c3c; color: white; }
+  .btn-reset:hover { background: #c0392b; }
+
+  .btn-stop { background: #7f8c8d; color: white; }
+  .btn-stop:hover { background: #95a5a6; }
+
+  .console-log {
+    background: #0d0d0d;
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 8px;
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    height: 70px;
+    overflow-y: auto;
+  }
+
+  .console-log .log-line { margin: 2px 0; }
+  .console-log .log-input { color: #f39c12; }
+  .console-log .log-success { color: #2ecc71; }
+  .console-log .log-error { color: #e74c3c; }
+  .console-log .log-info { color: #3498db; }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    font-size: 12px;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-dot.quiz { background: #e74c3c; }
+  .legend-dot.question { background: #3498db; }
+  .legend-dot.content { background: #f1c40f; }
+
+  .link-path {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-dasharray: 6 3;
+    animation: flowDash 1s linear infinite;
+  }
+
+  .link-path.quiz-path { stroke: #e74c3c; }
+  .link-path.question-path { stroke: #3498db; }
+
+  @keyframes flowDash {
+    to { stroke-dashoffset: -18; }
+  }
+
+  .link-dot { stroke: #fff; stroke-width: 1.5; }
+  .link-dot.quiz-dot { fill: #e74c3c; }
+  .link-dot.question-dot { fill: #3498db; }
+  .link-dot.content-dot { fill: #f1c40f; }
+</style>
+</head>
+<body>
+
+<h1>🔗 Тренажёр функции add_links()</h1>
+<p class="subtitle">Интерактивная демонстрация добавления связей между викторинами и вопросами</p>
+
+<div class="main-layout">
+
+  <!-- Левая панель: код программы -->
+  <div class="code-panel">
+    <h3>📄 Код функции</h3>
+    <div class="code-block"><span class="kw">def</span> <span class="fn">add_links</span>():
+    <span class="fn">open</span>()
+    cursor.execute(<span class="str">'''PRAGMA foreign_keys=on'''</span>)
+    query = <span class="str">"INSERT INTO quiz_content (quiz_id, question_id) VALUES (?,?)"</span>
+    answer = input(<span class="str">"Добавить связь (y / n)?"</span>)
+    <span class="kw">while</span> answer != <span class="str">'n'</span>:
+        quiz_id = int(input(<span class="str">"id викторины: "</span>))
+        question_id = int(input(<span class="str">"id вопроса: "</span>))
+        cursor.execute(query, [quiz_id, question_id])
+        conn.commit()
+        answer = input(<span class="str">"Добавить связь (y / n)?"</span>)
+    <span class="fn">close</span>()</div>
+    <div class="code-explanation">
+      <b>Как работает:</b><br>
+      1. Включает проверку внешних ключей<br>
+      2. В цикле запрашивает <b>quiz_id</b> и <b>question_id</b><br>
+      3. Добавляет запись в <b>quiz_content</b><br>
+      4. Повторяет, пока не введут <b>'n'</b><br><br>
+      <b>quiz_content</b> — связующая таблица для связи «многие-ко-многим» между <b>quiz</b> и <b>question</b>.
+    </div>
+  </div>
+
+  <!-- Правая панель: таблицы и управление -->
+  <div class="right-panel">
+
+    <div class="tables-area" id="tablesArea">
+      <svg class="svg-layer" id="svgLayer"></svg>
+
+      <div class="tables-top">
+        <!-- Таблица quiz -->
+        <div class="table-card" id="card-quiz">
+          <div class="table-header quiz-h">🏆 quiz</div>
+          <div class="table-body">
+            <table>
+              <thead><tr><th>id</th><th>name</th></tr></thead>
+              <tbody id="tbody-quiz"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Таблица question -->
+        <div class="table-card" id="card-question">
+          <div class="table-header question-h">❓ question</div>
+          <div class="table-body">
+            <table>
+              <thead><tr><th>id</th><th>question</th><th>answer</th></tr></thead>
+              <tbody id="tbody-question"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Таблица quiz_content -->
+      <div class="tables-bottom">
+        <div class="table-card content-card" id="card-content">
+          <div class="table-header content-h">🔗 quiz_content (связи)</div>
+          <div class="table-body">
+            <table>
+              <thead><tr><th>id</th><th>quiz_id</th><th>question_id</th></tr></thead>
+              <tbody id="tbody-content"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Панель управления -->
+    <div class="control-panel">
+      <h3>⌨️ Ввод данных (аналог input())</h3>
+      <div class="input-row">
+        <div class="input-group">
+          <label>id викторины (quiz_id):</label>
+          <input type="number" id="inputQuizId" min="1" max="3" placeholder="1-3">
+        </div>
+        <div class="input-group">
+          <label>id вопроса (question_id):</label>
+          <input type="number" id="inputQuestionId" min="1" max="6" placeholder="1-6">
+        </div>
+        <button class="btn btn-add" id="btnAdd" onclick="addLink()">➕ Добавить связь</button>
+        <button class="btn btn-stop" onclick="stopLoop()">⏹ Завершить (n)</button>
+        <button class="btn btn-reset" onclick="resetAll()">🔄 Сброс</button>
+      </div>
+      <div class="console-log" id="consoleLog">
+        <div class="log-line log-info">Готов к работе. Введите id викторины и id вопроса, нажмите "Добавить связь".</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot quiz"></div> quiz (викторина)</div>
+      <div class="legend-item"><div class="legend-dot question"></div> question (вопрос)</div>
+      <div class="legend-item"><div class="legend-dot content"></div> quiz_content (связь)</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let db = null;
+let linkCounter = 0;
+
+const QUIZ_DATA = [
+  [1, 'Своя игра'],
+  [2, 'Кто хочет стать миллионером?'],
+  [3, 'Самый умный']
+];
+
+const QUESTION_DATA = [
+  [1, 'Сколько месяцев в году имеют 28 дней?', 'Все'],
+  [2, 'Каким станет зелёный утёс, если упадёт в Красное море?', 'Мокрым'],
+  [3, 'Какой рукой лучше размешивать чай?', 'Ложкой'],
+  [4, 'Что не имеет длины, глубины, ширины, высоты, а можно измерить?', 'Время'],
+  [5, 'Когда сетью можно вытянуть воду?', 'Когда вода замерзла'],
+  [6, 'Что больше слона и ничего не весит?', 'Тень слона']
+];
+
+async function initDB() {
+  const SQL = await initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}` });
+  db = new SQL.Database();
+
+  db.run("CREATE TABLE quiz (id INTEGER PRIMARY KEY, name VARCHAR);");
+  db.run("CREATE TABLE question (id INTEGER PRIMARY KEY, question VARCHAR, answer VARCHAR, wrong1 VARCHAR, wrong2 VARCHAR, wrong3 VARCHAR);");
+  db.run("CREATE TABLE quiz_content (id INTEGER PRIMARY KEY, quiz_id INTEGER, question_id INTEGER, FOREIGN KEY(quiz_id) REFERENCES quiz(id), FOREIGN KEY(question_id) REFERENCES question(id));");
+
+  QUIZ_DATA.forEach(r => db.run("INSERT INTO quiz VALUES (?,?)", r));
+  QUESTION_DATA.forEach(r => db.run("INSERT INTO question (id, question, answer) VALUES (?,?,?)", r));
+
+  renderTables();
+  setTimeout(drawLinks, 100);
+}
+
+function renderTables() {
+  const quizRes = db.exec("SELECT * FROM quiz ORDER BY id");
+  const tbodyQuiz = document.getElementById('tbody-quiz');
+  tbodyQuiz.innerHTML = '';
+  if (quizRes.length) {
+    quizRes[0].values.forEach(row => {
+      tbodyQuiz.innerHTML += `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`;
+    });
+  }
+
+  const qRes = db.exec("SELECT id, question, answer FROM question ORDER BY id");
+  const tbodyQ = document.getElementById('tbody-question');
+  tbodyQ.innerHTML = '';
+  if (qRes.length) {
+    qRes[0].values.forEach(row => {
+      tbodyQ.innerHTML += `<tr><td>${row[0]}</td><td title="${row[1]}">${row[1].substring(0, 28)}...</td><td>${row[2]}</td></tr>`;
+    });
+  }
+
+  const cRes = db.exec("SELECT * FROM quiz_content ORDER BY id");
+  const tbodyC = document.getElementById('tbody-content');
+  tbodyC.innerHTML = '';
+  if (cRes.length) {
+    cRes[0].values.forEach((row, idx) => {
+      const isNew = idx === cRes[0].values.length - 1 && row[0] === linkCounter;
+      tbodyC.innerHTML += `<tr class="${isNew ? 'new-row content-row' : 'content-row'}">
+        <td>${row[0]}</td>
+        <td class="link-quiz">${row[1]}</td>
+        <td class="link-question">${row[2]}</td>
+      </tr>`;
+    });
+  }
+
+  setTimeout(drawLinks, 50);
+}
+
+function drawLinks() {
+  const svg = document.getElementById('svgLayer');
+  const area = document.getElementById('tablesArea');
+  const areaRect = area.getBoundingClientRect();
+
+  svg.innerHTML = '';
+
+  const cRes = db.exec("SELECT * FROM quiz_content ORDER BY id");
+  if (!cRes.length) return;
+
+  cRes[0].values.forEach(row => {
+    const [cid, qid, qnid] = row;
+
+    const quizRow = document.querySelector(`#tbody-quiz tr:nth-child(${qid})`);
+    const questionRow = document.querySelector(`#tbody-question tr:nth-child(${qnid})`);
+
+    if (!quizRow || !questionRow) return;
+
+    const qr = quizRow.getBoundingClientRect();
+    const qnr = questionRow.getBoundingClientRect();
+    const cc = document.getElementById('card-content').getBoundingClientRect();
+
+    const quizPoint = { x: qr.right - areaRect.left, y: qr.top + qr.height / 2 - areaRect.top };
+    const questionPoint = { x: qnr.right - areaRect.left, y: qnr.top + qnr.height / 2 - areaRect.top };
+
+    const contentRows = document.querySelectorAll('#tbody-content tr');
+    const idx = Array.from(contentRows).findIndex(r => {
+      const cells = r.querySelectorAll('td');
+      return cells.length && parseInt(cells[0].textContent) === cid;
+    });
+
+    if (idx < 0) return;
+    const cr = contentRows[idx].getBoundingClientRect();
+    const contentPoint = { x: cc.left - areaRect.left, y: cr.top + cr.height / 2 - areaRect.top };
+
+    const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const midX1 = (quizPoint.x + contentPoint.x) / 2;
+    path1.setAttribute('d', `M ${quizPoint.x} ${quizPoint.y} C ${midX1} ${quizPoint.y}, ${midX1} ${contentPoint.y}, ${contentPoint.x} ${contentPoint.y}`);
+    path1.setAttribute('class', 'link-path quiz-path');
+    svg.appendChild(path1);
+
+    const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const midX2 = (questionPoint.x + contentPoint.x) / 2;
+    path2.setAttribute('d', `M ${questionPoint.x} ${questionPoint.y} C ${midX2} ${questionPoint.y}, ${midX2} ${contentPoint.y}, ${contentPoint.x} ${contentPoint.y}`);
+    path2.setAttribute('class', 'link-path question-path');
+    svg.appendChild(path2);
+
+    [[quizPoint, 'quiz-dot'], [questionPoint, 'question-dot'], [contentPoint, 'content-dot']].forEach(([p, cls]) => {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', p.x);
+      circle.setAttribute('cy', p.y);
+      circle.setAttribute('r', 5);
+      circle.setAttribute('class', `link-dot ${cls}`);
+      svg.appendChild(circle);
+    });
+  });
+}
+
+function log(msg, cls = 'log-info') {
+  const consoleLog = document.getElementById('consoleLog');
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  line.textContent = msg;
+  consoleLog.appendChild(line);
+  consoleLog.scrollTop = consoleLog.scrollHeight;
+}
+
+function addLink() {
+  const quizIdInput = document.getElementById('inputQuizId');
+  const questionIdInput = document.getElementById('inputQuestionId');
+
+  const quizId = parseInt(quizIdInput.value);
+  const questionId = parseInt(questionIdInput.value);
+
+  if (!quizId || !questionId) {
+    log('⚠ Введите оба id!', 'log-error');
+    return;
+  }
+
+  const quizExists = db.exec(`SELECT * FROM quiz WHERE id = ${quizId}`);
+  const questionExists = db.exec(`SELECT * FROM question WHERE id = ${questionId}`);
+
+  if (!quizExists.length || !quizExists[0].values.length) {
+    log(`❌ Викторина с id=${quizId} не найдена!`, 'log-error');
+    return;
+  }
+  if (!questionExists.length || !questionExists[0].values.length) {
+    log(`❌ Вопрос с id=${questionId} не найден!`, 'log-error');
+    return;
+  }
+
+  const exists = db.exec(`SELECT * FROM quiz_content WHERE quiz_id=${quizId} AND question_id=${questionId}`);
+  if (exists.length && exists[0].values.length) {
+    log(`⚠ Связь quiz_id=${quizId}, question_id=${questionId} уже существует!`, 'log-error');
+    return;
+  }
+
+  linkCounter++;
+  db.run("INSERT INTO quiz_content (quiz_id, question_id) VALUES (?,?)", [quizId, questionId]);
+
+  const quizName = quizExists[0].values[0][1];
+  const questionText = questionExists[0].values[0][1].substring(0, 35);
+
+  log(`✅ Связь добавлена: quiz_id=${quizId} (${quizName}) ↔ question_id=${questionId}`, 'log-success');
+  log(`   SQL: INSERT INTO quiz_content (quiz_id, question_id) VALUES (${quizId},${questionId})`, 'log-info');
+
+  quizIdInput.value = '';
+  questionIdInput.value = '';
+  quizIdInput.focus();
+
+  renderTables();
+}
+
+function stopLoop() {
+  log('⏹ Цикл завершён (answer = "n"). Функция add_links() завершена.', 'log-input');
+  document.getElementById('btnAdd').disabled = true;
+}
+
+function resetAll() {
+  linkCounter = 0;
+  document.getElementById('btnAdd').disabled = false;
+  document.getElementById('consoleLog').innerHTML = '<div class="log-line log-info">База данных сброшена. Готов к работе.</div>';
+  document.getElementById('inputQuizId').value = '';
+  document.getElementById('inputQuestionId').value = '';
+  initDB();
+}
+
+window.addEventListener('resize', () => drawLinks());
+
+document.getElementById('inputQuestionId').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') addLink();
+});
+
+initDB();
+</script>
+
+</body>
+</html>

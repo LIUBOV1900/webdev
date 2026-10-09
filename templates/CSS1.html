@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Шпаргалка по CSS — Часть 1</title>
+<style>
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 10px;
+    }
+
+    .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        background: #fff;
+        padding: 14mm;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 36px;
+        background: linear-gradient(90deg, #001f5c, #2adede, #8a2be2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 6px;
+        letter-spacing: 2px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #555;
+        font-size: 15px;
+        margin-bottom: 16px;
+        font-style: italic;
+    }
+
+    .section {
+        margin-bottom: 16px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    }
+
+    .section h2 {
+        color: #fff;
+        padding: 10px 16px;
+        font-size: 18px;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .section th {
+        background: #f4f4f4;
+        padding: 8px 12px;
+        text-align: left;
+        font-size: 14px;
+        color: #333;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .section td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #eee;
+        vertical-align: top;
+        line-height: 1.4;
+    }
+
+    .section tr:last-child td { border-bottom: none; }
+
+    .section td:first-child {
+        font-family: 'Consolas', monospace;
+        font-weight: bold;
+        color: #8a2be2;
+        width: 22%;
+        font-size: 14px;
+    }
+
+    .section td:last-child {
+        font-family: 'Consolas', monospace;
+        font-size: 13px;
+        color: #001f5c;
+        background: #f9f9ff;
+        width: 38%;
+    }
+
+    /* Цвета заголовков секций */
+    .s1 h2 { background: linear-gradient(90deg, #ff6b6b, #ee5a6f); }
+    .s2 h2 { background: linear-gradient(90deg, #43e97b, #38f9d7); color: #004d40; }
+    .s3 h2 { background: linear-gradient(90deg, #a18cd1, #fbc2eb); color: #3a1078; }
+
+    .intro {
+        background: linear-gradient(135deg, #001f5c, #2adede);
+        color: #fff;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 18px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .intro h3 {
+        font-size: 20px;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .intro p {
+        font-size: 15px;
+        line-height: 1.5;
+        text-align: center;
+    }
+
+    .footer {
+        margin-top: 14px;
+        text-align: center;
+        font-size: 13px;
+        color: #666;
+        border-top: 2px dashed #ccc;
+        padding-top: 8px;
+    }
+
+    @media print {
+        body { background: #fff; padding: 0; }
+        .page { box-shadow: none; width: 100%; }
+    }
+</style>
+</head>
+<body>
+<div class="page">
+    <h1>✨ ШПАРГАЛКА ПО CSS — ЧАСТЬ 1 ✨</h1>
+    <p class="subtitle">Базовые свойства </p>
+
+    <div class="intro">      
+        <p>12 свойств<br>
+        Это основа для оформления текста, рамок и отступов.</p>
+    </div>
+
+    <!-- 📝 Текст и шрифты -->
+    <div class="section s1">
+        <h2>📝 Текст и шрифты</h2>
+        <table>
+            <tr><th>Свойство</th><th>Зачем</th><th>Пример</th></tr>
+            <tr><td>font-family</td><td>Задаёт семейство шрифтов для текста</td><td>font-family: sans-serif;</td></tr>
+            <tr><td>font-size</td><td>Размер шрифта в px, em, rem и др.</td><td>font-size: 60px;</td></tr>
+            <tr><td>color</td><td>Определяет цвет текста элемента</td><td>color: blueviolet;</td></tr>
+            <tr><td>text-align</td><td>Выравнивание текста: left, center, right</td><td>text-align: center;</td></tr>
+            <tr><td>text-decoration</td><td>Подчёркивание, зачёркивание и т.п.</td><td>text-decoration: none;</td></tr>
+        </table>
+    </div>
+
+    <!-- 📐 Размеры и отступы -->
+    <div class="section s2">
+        <h2>📐 Размеры и отступы</h2>
+        <table>
+            <tr><th>Свойство</th><th>Зачем</th><th>Пример</th></tr>
+            <tr><td>padding</td><td>Внутренний отступ от содержимого до границы</td><td>padding: 20px;</td></tr>
+            <tr><td>margin</td><td>Внешний отступ от элемента до соседей</td><td>margin: 30px;</td></tr>
+            <tr><td>width</td><td>Задаёт ширину элемента</td><td>width: 200px;</td></tr>
+            <tr><td>height</td><td>Задаёт высоту элемента</td><td>height: 60px;</td></tr>
+        </table>
+    </div>
+
+    <!-- 🎨 Оформление -->
+    <div class="section s3">
+        <h2>🎨 Оформление</h2>
+        <table>
+            <tr><th>Свойство</th><th>Зачем</th><th>Пример</th></tr>
+            <tr><td>background-color</td><td>Устанавливает цвет фона элемента</td><td>background-color: navy;</td></tr>
+            <tr><td>border</td><td>Рамка: толщина, стиль, цвет</td><td>border: 1px solid white;</td></tr>
+            <tr><td>border-radius</td><td>Скругляет углы элемента</td><td>border-radius: 10px;</td></tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        📖 Часть 1 — базовые свойства. Часть 2 — дополнительные. Вместе = полная шпаргалка! 🚀
+    </div>
+</div>
+</body>
+</html>

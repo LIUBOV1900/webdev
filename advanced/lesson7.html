@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask: HTML-шаблоны и Jinja2</title>
+    <style>
+        :root {
+            --bg-color: #1e1e2e;
+            --text-color: #cdd6f4;
+            --accent-color: #89b4fa;
+            --accent2-color: #f38ba8;
+            --accent3-color: #a6e3a1;
+            --code-bg: #11111b;
+            --card-bg: #313244;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 60px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 2.4rem;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent2-color);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.6rem;
+            color: var(--accent2-color);
+            margin-bottom: 15px;
+        }
+
+        p, li {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            max-width: 950px;
+        }
+
+        ul {
+            list-style-type: none;
+            text-align: left;
+            max-width: 950px;
+        }
+
+        li::before {
+            content: "➤ ";
+            color: var(--accent3-color);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        code {
+            background-color: var(--code-bg);
+            color: var(--accent3-color);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.15rem;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid var(--accent-color);
+            overflow-x: auto;
+            max-width: 850px;
+            width: 100%;
+            margin: 15px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            font-size: 1.15rem;
+            color: #cdd6f4;
+            line-height: 1.5;
+        }
+
+        .keyword { color: #cba6f7; }
+        .string { color: #a6e3a1; }
+        .comment { color: #6c7086; font-style: italic; }
+        .func { color: #89b4fa; }
+        .tag { color: #f38ba8; }
+        .attr { color: #fab387; }
+
+        .highlight {
+            color: var(--accent2-color);
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: #a6adc8;
+            text-align: center;
+        }
+
+        .nav-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #a6adc8;
+            z-index: 100;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            font-size: 1.2rem;
+            color: #a6adc8;
+            z-index: 100;
+            background: rgba(0,0,0,0.4);
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+
+        .click-zone {
+            position: absolute;
+            top: 0;
+            width: 10%;
+            height: 100%;
+            z-index: 50;
+            cursor: pointer;
+        }
+        .click-zone.left { left: 0; }
+        .click-zone.right { right: 0; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            border-top: 4px solid var(--accent-color);
+        }
+        .card.warn {
+            border-top: 4px solid var(--accent2-color);
+        }
+        .card.success {
+            border-top: 4px solid var(--accent3-color);
+        }
+
+        .analogy {
+            background: rgba(137, 180, 250, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            max-width: 900px;
+            font-style: italic;
+        }
+        
+        .flow-chart {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .flow-box {
+            background: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 8px;
+            border: 2px solid var(--accent-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        .flow-arrow {
+            font-size: 2rem;
+            color: var(--accent2-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="slide-counter"><span id="current">1</span> / <span id="total">15</span></div>
+<div class="nav-hint">Стрелки ← → или клики по краям экрана</div>
+
+<div class="click-zone left" onclick="changeSlide(-1)"></div>
+<div class="click-zone right" onclick="changeSlide(1)"></div>
+
+<div class="presentation-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+        <h1>HTML-шаблоны во Flask<br>и движок Jinja2</h1>
+        <p class="subtitle">Модуль 5. Урок 7</p>
+        <p class="subtitle" style="margin-top: 40px; font-size: 1.2rem;">Разделяем логику Python и дизайн HTML. Делаем код чистым и понятным.</p>
+    </div>
+
+    <!-- Slide 2: Recap -->
+    <div class="slide">
+        <h2>Где мы сейчас? (Повторение)</h2>
+        <div class="grid">
+            <div class="card success">
+                <h3>✅ Что уже умеем</h3>
+                <ul>
+                    <li>Создавать Flask-приложение и маршруты.</li>
+                    <li>Принимать данные через HTML-формы (POST).</li>
+                    <li>Хранить личные данные пользователей в <b>сессиях</b>.</li>
+                    <li>Делать SQL-запросы к базе данных.</li>
+                </ul>
+            </div>
+            <div class="card warn">
+                <h3>🚧 В чем проблема сейчас?</h3>
+                <p>Чтобы показать вопрос или список викторин, мы пишем HTML прямо внутри Python-кода, склеивая строки:</p>
+                <pre><code>html = <span class="string">"&lt;h1&gt;"</span> + title + <span class="string">"&lt;/h1&gt;"</span></code></pre>
+                <p>Это ужасно неудобно!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: The Problem -->
+    <div class="slide">
+        <h2>Почему «склеивать» HTML в Python — это плохо?</h2>
+        <div class="card warn" style="max-width: 900px;">
+            <h3 style="color: var(--accent2-color);">⚠️ Минусы подхода «от данных к тегам»</h3>
+            <ul>
+                <li><b>Каша в коде:</b> Очень легко забыть закрывающую кавычку или тег, и всё сломается.</li>
+                <li><b>Сложно менять дизайн:</b> Чтобы поменять цвет кнопки, нужно лезть в Python-код.</li>
+                <li><b>Нельзя разделить роли:</b> Дизайнер не может верстать страницу, пока программист пишет бэкенд.</li>
+            </ul>
+        </div>
+        <div class="analogy">
+            <b>Аналогия:</b> Это как строить дом, постоянно бегая за бетоном в другой город, вместо того чтобы привезти готовые блоки на стройку.
+        </div>
+    </div>
+
+    <!-- Slide 4: The Solution -->
+    <div class="slide">
+        <h2>Решение: HTML-Шаблоны 📄</h2>
+        <p><span class="highlight">Шаблон</span> — это обычный HTML-файл, в котором есть «дырки» (места) для данных. Шаблон отвечает <b>только за внешний вид</b>.</p>
+        <div class="grid" style="margin-top: 20px;">
+            <div class="card">
+                <h3>🐍 Python (Flask)</h3>
+                <p>Отвечает за <b>логику</b>: берет данные из БД, считает баллы, принимает решения.</p>
+                <p><i>«Вот данные, отрисуй их красиво».</i></p>
+            </div>
+            <div class="card success">
+                <h3>🎨 HTML (Шаблон)</h3>
+                <p>Отвечает за <b>дизайн</b>: расставляет теги, стили, кнопки.</p>
+                <p><i>«Я готов принять любые данные и красиво их показать».</i></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Folder Structure -->
+    <div class="slide">
+        <h2>Структура папок и `render_template`</h2>
+        <p>Flask очень строг к порядку файлов. Шаблоны должны лежать в специальной папке.</p>
+        <div class="grid">
+            <div class="card">
+                <h3>📁 Структура на диске</h3>
+                <pre><code>my_project/
+├── app.py          <span class="comment"># Наш Python код</span>
+├── templates/      <span class="comment"># 📂 Сюда кладем HTML!</span>
+│   ├── index.html
+│   └── test.html
+└── static/         <span class="comment"># 📂 Картинки, CSS</span>
+    └── style.css</code></pre>
+            </div>
+            <div class="card success">
+                <h3>⚙️ Код во Flask</h3>
+                <p>Используем функцию <code>render_template</code>, чтобы «собрать» страницу.</p>
+                <pre><code><span class="keyword">from</span> flask <span class="keyword">import</span> render_template
+
+<span class="keyword">def</span> <span class="func">index</span>():
+    <span class="comment"># Передаем данные в шаблон</span>
+    <span class="keyword">return</span> render_template(
+        <span class="string">'index.html'</span>, 
+        title=<span class="string">"Викторина"</span>
+    )</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Jinja2 Variables -->
+    <div class="slide">
+        <h2>Движок Jinja2: Переменные `{{ }}`</h2>
+        <p>Внутри HTML-шаблона мы используем двойные фигурные скобки <code>{{ }}</code>, чтобы сказать Flask: <i>«Вставь сюда значение переменной»</i>.</p>
+        <div class="grid">
+            <div class="card">
+                <h3>📄 Шаблон (index.html)</h3>
+                <pre><code><span class="tag">&lt;h1&gt;</span><span class="keyword">{{</span> title <span class="keyword">}}</span><span class="tag">&lt;/h1&gt;</span>
+<span class="tag">&lt;p&gt;</span>Привет, <span class="keyword">{{</span> username <span class="keyword">}}</span>!<span class="tag">&lt;/p&gt;</span></code></pre>
+            </div>
+            <div class="card success">
+                <h3>🐍 Python (app.py)</h3>
+                <pre><code><span class="keyword">return</span> render_template(
+    <span class="string">'index.html'</span>,
+    title=<span class="string">"Главная"</span>,
+    username=<span class="string">"Вася"</span>
+)</code></pre>
+            </div>
+        </div>
+        <div class="analogy">
+            <b>Важно:</b> Имя переменной в Python и в HTML должно совпадать! Можно передавать строки, числа, списки и словари.
+        </div>
+    </div>
+
+    <!-- Slide 7: Jinja2 Conditions -->
+    <div class="slide">
+        <h2>Условия в шаблонах: `{% if %}`</h2>
+        <p>Иногда нужно показать блок кода только при определенном условии (например, если пользователь авторизован). Для этого используем одинарные скобки с процентом <code>{% %}</code>.</p>
+        <pre><code><span class="tag">&lt;body&gt;</span>
+  <span class="keyword">{%</span> <span class="keyword">if</span> is_logged_in <span class="keyword">%}</span>
+    <span class="tag">&lt;p&gt;</span>Привет, <span class="keyword">{{</span> username <span class="keyword">}}</span>!<span class="tag">&lt;/p&gt;</span>
+  <span class="keyword">{%</span> <span class="keyword">else</span> <span class="keyword">%}</span>
+    <span class="tag">&lt;p&gt;</span>Пожалуйста, войдите.<span class="tag">&lt;/p&gt;</span>
+  <span class="keyword">{%</span> <span class="keyword">endif</span> <span class="keyword">%}</span>
+<span class="tag">&lt;/body&gt;</span></code></pre>
+        <p style="margin-top: 15px;">Операторы (<code>==</code>, <code>></code>, <code>and</code>, <code>or</code>) работают точно так же, как в обычном Python!</p>
+    </div>
+
+    <!-- Slide 8: Jinja2 Loops -->
+    <div class="slide">
+        <h2>Циклы в шаблонах: `{% for %}`</h2>
+        <p>Чтобы вывести список (например, варианты ответов или список викторин), используем цикл.</p>
+        <pre><code><span class="tag">&lt;ul&gt;</span>
+  <span class="keyword">{%</span> <span class="keyword">for</span> quiz <span class="keyword">in</span> quizzes_list <span class="keyword">%}</span>
+    <span class="tag">&lt;li&gt;</span><span class="keyword">{{</span> quiz.name <span class="keyword">}}</span><span class="tag">&lt;/li&gt;</span>
+  <span class="keyword">{%</span> <span class="keyword">endfor</span> <span class="keyword">%}</span>
+<span class="tag">&lt;/ul&gt;</span></code></pre>
+        <div class="analogy">
+            <b>Как это работает:</b> Flask берет список <code>quizzes_list</code>, который мы передали из Python, и для каждого элемента создает кусочек HTML, подставляя его имя.
+        </div>
+    </div>
+
+    <!-- Slide 9: Static Files -->
+    <div class="slide">
+        <h2>Подключаем CSS (Статические файлы)</h2>
+        <p>Чтобы сайт был красивым, нужно подключить CSS. Файлы стилей лежат в папке <code>static/</code>. Чтобы получить на них ссылку, используем функцию <code>url_for</code> прямо в HTML.</p>
+        <pre><code><span class="tag">&lt;head&gt;</span>
+  <span class="comment">&lt;!-- Ссылка на файл static/style.css --&gt;</span>
+  <span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="string">"stylesheet"</span> 
+        <span class="attr">href</span>=<span class="string">"<span class="keyword">{{</span> url_for(<span class="string">'static'</span>, filename=<span class="string">'style.css'</span>) <span class="keyword">}}</span>"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/head&gt;</span></code></pre>
+        <p><code>url_for('static', ...)</code> — это встроенная функция Flask, которая сама знает, где лежит папка <code>static</code>, и формирует правильный URL.</p>
+    </div>
+
+    <!-- Slide 10: Practical Quiz Page -->
+    <div class="slide">
+        <h2>Практика: Шаблон страницы вопроса</h2>
+        <p>Нам нужно показать текст вопроса и варианты ответов (радиокнопки). Но варианты нужно перемешать, чтобы правильный ответ не был всегда первым!</p>
+        <div class="grid">
+            <div class="card">
+                <h3>🐍 Python (Перемешиваем)</h3>
+                <pre><code><span class="keyword">from</span> random <span class="keyword">import</span> shuffle
+
+<span class="keyword">def</span> <span class="func">test</span>():
+    answers = [<span class="string">"Правильный"</span>, <span class="string">"Нет"</span>, <span class="string">"Не знаю"</span>]
+    shuffle(answers) <span class="comment"># &lt;-- Перемешали!</span>
+    
+    <span class="keyword">return</span> render_template(<span class="string">'test.html'</span>,
+        question=<span class="string">"Сколько будет 2+2?"</span>,
+        answers_list=answers
+    )</code></pre>
+            </div>
+            <div class="card success">
+                <h3>🎨 HTML (test.html)</h3>
+                <pre><code><span class="tag">&lt;h2&gt;</span><span class="keyword">{{</span> question <span class="keyword">}}</span><span class="tag">&lt;/h2&gt;</span>
+<span class="tag">&lt;form</span> <span class="attr">method</span>=<span class="string">"POST"</span><span class="tag">&gt;</span>
+  
+  <span class="keyword">{%</span> <span class="keyword">for</span> ans <span class="keyword">in</span> answers_list <span class="keyword">%}</span>
+    <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="string">"radio"</span> <span class="attr">name</span>=<span class="string">"answer"</span> 
+           <span class="attr">value</span>=<span class="string">"<span class="keyword">{{</span> ans <span class="keyword">}}</span>"</span><span class="tag">&gt;</span>
+    <span class="keyword">{{</span> ans <span class="keyword">}}</span>
+  <span class="keyword">{%</span> <span class="keyword">endfor</span> <span class="keyword">%}</span>
+
+  <span class="tag">&lt;button&gt;</span>Ответить<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: Hidden Inputs -->
+    <div class="slide">
+        <h2>⚠️ Проблема: Как передать ID вопроса?</h2>
+        <p>Когда пользователь нажимает «Ответить», сервер должен понять, <b>на какой именно вопрос</b> он ответил. Но мы не хотим показывать ID вопроса пользователю на экране!</p>
+        <div class="card warn" style="margin-top: 20px; max-width: 850px;">
+            <h3 style="color: var(--accent2-color);">Решение: Скрытое поле (`type="hidden"`)</h3>
+            <p>Это элемент формы, который <b>не виден</b> на странице, но его значение отправляется на сервер вместе с остальными данными.</p>
+            <pre><code><span class="comment">&lt;!-- Пользователь этого не видит, но браузер отправит q_id=17 на сервер --&gt;</span>
+&lt;input <span class="attr">type</span>=<span class="string">"hidden"</span> <span class="attr">name</span>=<span class="string">"q_id"</span> <span class="attr">value</span>=<span class="string">"<span class="keyword">{{</span> question_id <span class="keyword">}}</span>"</span>&gt;</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 12: Processing the Answer -->
+    <div class="slide">
+        <h2>Обработка ответа на сервере</h2>
+        <p>Функция <code>test()</code> теперь работает как «развилка». Если пришел POST-запрос, значит, пользователь ответил.</p>
+        <pre><code><span class="keyword">def</span> <span class="func">test</span>():
+    <span class="keyword">if</span> request.method == <span class="string">'POST'</span>:
+        <span class="comment"># 1. Читаем скрытый ID вопроса и текст ответа</span>
+        q_id = request.form.get(<span class="string">'q_id'</span>)
+        user_answer = request.form.get(<span class="string">'answer'</span>)
+        
+        <span class="comment"># 2. Проверяем ответ (запрос к БД)</span>
+        <span class="keyword">if</span> check_answer(q_id, user_answer):
+            session[<span class="string">'score'</span>] += <span class="keyword">1</span>
+            
+        <span class="comment"># 3. Переходим к следующему вопросу или к результату</span>
+        next_q = get_next_question()
+        <span class="keyword">if not</span> next_q:
+            <span class="keyword">return</span> redirect(url_for(<span class="string">'result'</span>))
+        <span class="comment"># ... (иначе рендерим следующий вопрос)</span></code></pre>
+    </div>
+
+    <!-- Slide 13: Checking Answer in DB -->
+    <div class="slide">
+        <h2>Проверка ответа через SQL</h2>
+        <p>Функция <code>check_answer()</code> берет ID вопроса, находит в БД правильный ответ и сравнивает с тем, что прислал пользователь.</p>
+        <pre><code><span class="keyword">def</span> <span class="func">check_answer</span>(q_id, user_ans):
+    <span class="comment"># SQL-запрос: найти правильный ответ по ID вопроса</span>
+    query = <span class="string">'''SELECT question.answer 
+               FROM quiz_content, question
+               WHERE quiz_content.id = ? 
+               AND quiz_content.question_id = question.id'''</span>
+    
+    result = execute_query(query, (q_id,))
+    correct_answer = result[<span class="keyword">0</span>]
+    
+    <span class="comment"># Сравниваем и возвращаем True или False</span>
+    <span class="keyword">return</span> correct_answer == user_ans</code></pre>
+        <p>Так как варианты перемешаны в HTML, пользователь не может просто посмотреть код страницы и узнать правильный ответ!</p>
+    </div>
+
+    <!-- Slide 14: Result Page -->
+    <div class="slide">
+        <h2>Финал: Страница результатов</h2>
+        <p>Когда вопросы закончились, мы перенаправляем пользователя на <code>/result</code>. Там мы просто берем данные из сессии и показываем их.</p>
+        <div class="grid">
+            <div class="card">
+                <h3>🐍 Python</h3>
+                <pre><code><span class="keyword">def</span> <span class="func">result</span>():
+    <span class="keyword">return</span> render_template(
+        <span class="string">'result.html'</span>,
+        total=session.get(<span class="string">'total'</span>, <span class="keyword">0</span>),
+        score=session.get(<span class="string">'score'</span>, <span class="keyword">0</span>)
+    )</code></pre>
+            </div>
+            <div class="card success">
+                <h3>🎨 HTML (result.html)</h3>
+                <pre><code><span class="tag">&lt;h1&gt;</span>Викторина завершена!<span class="tag">&lt;/h1&gt;</span>
+<span class="tag">&lt;p&gt;</span>
+  Вы ответили на <span class="keyword">{{</span> total <span class="keyword">}}</span> вопросов.
+<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;p&gt;</span>
+  Правильных ответов: <span class="keyword">{{</span> score <span class="keyword">}}</span>
+<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="string">"/"</span><span class="tag">&gt;</span>Пройти еще раз<span class="tag">&lt;/a&gt;</span></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 15: Summary -->
+    <div class="slide">
+        <h2>Итоги урока</h2>
+        <ul>
+            <li><b>Шаблоны</b> отделяют дизайн (HTML) от логики (Python). Это делает код чистым.</li>
+            <li>Файлы шаблонов лежат в папке <code>templates/</code>, а стили/картинки в <code>static/</code>.</li>
+            <li>Функция <code>render_template()</code> «скармливает» данные в HTML.</li>
+            <li>Движок <b>Jinja2</b> позволяет использовать переменные <code>{{ }}</code>, условия <code>{% if %}</code> и циклы <code>{% for %}</code> прямо внутри HTML.</li>
+            <li>Скрытые поля (<code>type="hidden"</code>) помогают передавать служебные данные (например, ID) на сервер, не показывая их пользователю.</li>
+        </ul>
+        <h3 style="margin-top: 30px; text-align: center; color: var(--accent3-color);">🎉 Поздравляю! Теперь ваш сайт выглядит как настоящее веб-приложение!</h3>
+    </div>
+
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    const currentSpan = document.getElementById('current');
+    const totalSpan = document.getElementById('total');
+    let currentSlide = 0;
+
+    totalSpan.textContent = slides.length;
+
+    function updateSlides() {
+        slides.forEach((slide, index) => {
+            slide.classList.remove('active');
+            if (index === currentSlide) {
+                slide.classList.add('active');
+            }
+        });
+        currentSpan.textContent = currentSlide + 1;
+    }
+
+    function changeSlide(direction) {
+        currentSlide += direction;
+        if (currentSlide >= slides.length) {
+            currentSlide = 0;
+        }
+        if (currentSlide < 0) {
+            currentSlide = slides.length - 1;
+        }
+        updateSlides();
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+            changeSlide(1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            changeSlide(-1);
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>SQL Тренажёр</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: #eee;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: rgba(0,0,0,0.4);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  h1 { text-align: center; margin-top: 0; color: #ffd700; }
+  .level-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .level-tab {
+    flex: 1;
+    padding: 12px;
+    background: #34495e;
+    border: none;
+    color: #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.2s;
+  }
+  .level-tab.active { background: #ffd700; color: #222; font-weight: bold; }
+  .level-tab:hover { background: #4a6278; }
+  .level-tab.active:hover { background: #ffcc00; }
+
+  .task {
+    background: rgba(255,255,255,0.07);
+    border-left: 4px solid #ffd700;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+  }
+  .task h3 { margin: 0 0 10px 0; color: #ffd700; }
+  .task .desc { line-height: 1.5; }
+  .task .hint {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #bbb;
+    font-style: italic;
+    display: none;
+  }
+  .task .hint.show { display: block; }
+
+  textarea {
+    width: 100%;
+    min-height: 80px;
+    background: #1a1a1a;
+    color: #0f0;
+    border: 2px solid #444;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: 'Consolas', monospace;
+    font-size: 15px;
+    resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: #ffd700; }
+
+  .buttons { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  button.action {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: 0.2s;
+  }
+  .btn-run { background: #27ae60; color: white; }
+  .btn-run:hover { background: #2ecc71; }
+  .btn-hint { background: #f39c12; color: white; }
+  .btn-hint:hover { background: #f1c40f; }
+  .btn-reset { background: #7f8c8d; color: white; }
+  .btn-reset:hover { background: #95a5a6; }
+
+  .result {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 6px;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    max-height: 250px;
+    overflow: auto;
+  }
+  .result.ok { background: rgba(39,174,96,0.25); border-left: 4px solid #27ae60; }
+  .result.err { background: rgba(231,76,60,0.25); border-left: 4px solid #e74c3c; }
+  .result.info { background: rgba(52,152,219,0.25); border-left: 4px solid #3498db; }
+
+  .progress {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #ffd700;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎯 SQL Тренажёр</h1>
+  <div class="progress" id="progress">Уровень 1: 0 / 0</div>
+
+  <div class="level-tabs">
+    <button class="level-tab active" data-level="1">Уровень 1 — Основы SQL</button>
+    <button class="level-tab" data-level="2">Уровень 2 — Запросы из программы викторин</button>
+  </div>
+
+  <div id="tasks"></div>
+</div>
+
+<script>
+let db = null;
+let currentLevel = 1;
+let solved = {1: new Set(), 2: new Set()};
+
+// ============ ЗАДАНИЯ ============
+const tasks = {
+  1: [
+    {
+      id: 1,
+      title: "Задание 1. Простой SELECT",
+      desc: "Выведи все столбцы и все строки из таблицы <b>students</b>.",
+      hint: "SELECT * FROM students",
+      check: (r) => r && r.length === 4 && r[0].name === "Аня"
+    },
+    {
+      id: 2,
+      title: "Задание 2. WHERE",
+      desc: "Выведи имена (name) студентов, которым больше 18 лет.",
+      hint: "SELECT name FROM students WHERE age > 18",
+      check: (r) => r && r.length === 3 && r.every(x => x.name && !x.age)
+    },
+    {
+      id: 3,
+      title: "Задание 3. ORDER BY",
+      desc: "Выведи все товары из таблицы <b>products</b>, отсортированные по цене (price) по возрастанию.",
+      hint: "SELECT * FROM products ORDER BY price",
+      check: (r) => r && r.length === 4 && r[0].price <= r[1].price && r[1].price <= r[2].price
+    },
+    {
+      id: 4,
+      title: "Задание 4. Агрегация COUNT",
+      desc: "Посчитай количество товаров в таблице <b>products</b>.",
+      hint: "SELECT COUNT(*) FROM products",
+      check: (r) => r && r[0] && (r[0]["COUNT(*)"] === 4 || Object.values(r[0])[0] === 4)
+    },
+    {
+      id: 5,
+      title: "Задание 5. INSERT",
+      desc: "Добавь в таблицу <b>students</b> нового студента: name='Игорь', age=20, city='Казань'. Затем выведи всех студентов.",
+      hint: "INSERT INTO students (name, age, city) VALUES ('Игорь', 20, 'Казань'); SELECT * FROM students;",
+      check: () => {
+        const r = db.exec("SELECT * FROM students WHERE name='Игорь' AND age=20 AND city='Казань'");
+        return r.length && r[0].values.length === 1;
+      }
+    },
+    {
+      id: 6,
+      title: "Задание 6. UPDATE",
+      desc: "Обнови город студента 'Аня' на 'Сочи'. Затем выведи всех студентов.",
+      hint: "UPDATE students SET city='Сочи' WHERE name='Аня'; SELECT * FROM students;",
+      check: () => {
+        const r = db.exec("SELECT city FROM students WHERE name='Аня'");
+        return r.length && r[0].values[0][0] === "Сочи";
+      }
+    },
+    {
+      id: 7,
+      title: "Задание 7. DELETE",
+      desc: "Удали из таблицы <b>products</b> товар с названием 'Ручка'. Затем выведи оставшиеся.",
+      hint: "DELETE FROM products WHERE name='Ручка'; SELECT * FROM products;",
+      check: () => {
+        const r = db.exec("SELECT * FROM products WHERE name='Ручка'");
+        return r.length === 0 || r[0].values.length === 0;
+      }
+    },
+    {
+      id: 8,
+      title: "Задание 8. GROUP BY",
+      desc: "Выведи количество студентов в каждом городе: city и количество. Отсортируй по убыванию количества.",
+      hint: "SELECT city, COUNT(*) AS cnt FROM students GROUP BY city ORDER BY cnt DESC",
+      check: (r) => r && r.length >= 2 && r[0].cnt >= r[1].cnt
+    }
+  ],
+  2: [
+    {
+      id: 1,
+      title: "Задание 1. Вывод всех викторин (как в get_quises)",
+      desc: "Выведи все викторины из таблицы <b>quiz</b>, отсортированные по id. Это аналог запроса из функции <b>get_quises()</b>.",
+      hint: "SELECT * FROM quiz ORDER BY id",
+      check: (r) => r && r.length === 3 && r[0].name === "Своя игра" && r[0].id === 1
+    },
+    {
+      id: 2,
+      title: "Задание 2. Вывод всех вопросов (как в show)",
+      desc: "Выведи все вопросы из таблицы <b>question</b>. Это аналог вызова <b>show('question')</b>.",
+      hint: "SELECT * FROM question",
+      check: (r) => r && r.length === 6 && r[0].question && r[0].answer
+    },
+    {
+      id: 3,
+      title: "Задание 3. Вывод всех связей (как в show)",
+      desc: "Выведи все записи из таблицы <b>quiz_content</b>. Это аналог вызова <b>show('quiz_content')</b>.",
+      hint: "SELECT * FROM quiz_content",
+      check: (r) => r && r.length === 6 && r[0].quiz_id !== undefined && r[0].question_id !== undefined
+    },
+    {
+      id: 4,
+      title: "Задание 4. Добавление нового вопроса (как в add_questions)",
+      desc: "Добавь новый вопрос в таблицу <b>question</b>: текст — <b>'Столица Франции?'</b>, ответ — <b>'Париж'</b>, неправильные — <b>'Лондон'</b>, <b>'Берлин'</b>, <b>'Мадрид'</b>. Затем выведи все вопросы.",
+      hint: "INSERT INTO question (question, answer, wrong1, wrong2, wrong3) VALUES ('Столица Франции?','Париж','Лондон','Берлин','Мадрид'); SELECT * FROM question;",
+      check: () => {
+        const r = db.exec("SELECT * FROM question WHERE question='Столица Франции?' AND answer='Париж'");
+        return r.length && r[0].values.length === 1;
+      }
+    },
+    {
+      id: 5,
+      title: "Задание 5. Добавление новой викторины (как в add_quiz)",
+      desc: "Добавь новую викторину в таблицу <b>quiz</b> с названием <b>'Что? Где? Когда?'</b>. Затем выведи все викторины.",
+      hint: "INSERT INTO quiz (name) VALUES ('Что? Где? Когда?'); SELECT * FROM quiz;",
+      check: () => {
+        const r = db.exec("SELECT * FROM quiz WHERE name='Что? Где? Когда?'");
+        return r.length && r[0].values.length === 1;
+      }
+    },
+    {
+      id: 6,
+      title: "Задание 6. Добавление связи (как в add_links)",
+      desc: "Свяжи викторину с id=1 и вопрос с id=1 через таблицу <b>quiz_content</b>. Это аналог запроса из функции <b>add_links()</b>. Затем выведи все связи.",
+      hint: "INSERT INTO quiz_content (quiz_id, question_id) VALUES (1,1); SELECT * FROM quiz_content;",
+      check: () => {
+        const r = db.exec("SELECT * FROM quiz_content WHERE quiz_id=1 AND question_id=1");
+        return r.length && r[0].values.length >= 1;
+      }
+    },
+    {
+      id: 7,
+      title: "Задание 7. Запрос get_question_after — следующий вопрос",
+      desc: "Напиши запрос, аналогичный функции <b>get_question_after(question_id=0, quiz_id=1)</b>: найди первый вопрос викторины с id=1. Выведи id связи, текст вопроса, ответ и три неправильных варианта. Используй неявный JOIN через WHERE.",
+      hint: "SELECT quiz_content.id, question.question, question.answer, question.wrong1, question.wrong2, question.wrong3 FROM question, quiz_content WHERE quiz_content.question_id = question.id AND quiz_content.id > 0 AND quiz_content.quiz_id = 1 ORDER BY quiz_content.id LIMIT 1",
+      check: (r) => r && r.length === 1 && r[0].question && r[0].answer && r[0].wrong1 && r[0].wrong2 && r[0].wrong3
+    },
+    {
+      id: 8,
+      title: "Задание 8. Запрос check_answer — проверка ответа",
+      desc: "Напиши запрос, аналогичный функции <b>check_answer(q_id, ans_text)</b>: найди правильный ответ для связи с id=1. Выведи только поле answer.",
+      hint: "SELECT question.answer FROM quiz_content, question WHERE quiz_content.id = 1 AND quiz_content.question_id = question.id",
+      check: (r) => r && r.length === 1 && r[0].answer
+    },
+    {
+      id: 9,
+      title: "Задание 9. Удаление таблицы (как в clear_db)",
+      desc: "Удали таблицу <b>quiz_content</b> командой DROP. Затем попробуй вывести все связи (должна быть ошибка или пустой результат). После проверки нажми 'Сброс БД' для восстановления.",
+      hint: "DROP TABLE IF EXISTS quiz_content; SELECT * FROM quiz_content;",
+      check: () => {
+        try {
+          const r = db.exec("SELECT * FROM quiz_content");
+          return r.length === 0 || r[0].values.length === 0;
+        } catch(e) {
+          return true; // таблица удалена — это тоже успех
+        }
+      }
+    },
+    {
+      id: 10,
+      title: "Задание 10. Создание таблицы (как в create)",
+      desc: "Создай таблицу <b>player</b> с полями: id (INTEGER PRIMARY KEY), name (VARCHAR), score (INTEGER). Это аналог запросов из функции <b>create()</b>. Затем выведи структуру через SELECT.",
+      hint: "CREATE TABLE IF NOT EXISTS player (id INTEGER PRIMARY KEY, name VARCHAR, score INTEGER); SELECT * FROM player;",
+      check: () => {
+        try {
+          const r = db.exec("SELECT * FROM player");
+          return r.length >= 0; // таблица существует
+        } catch(e) {
+          return false;
+        }
+      }
+    }
+  ]
+};
+
+// ============ ИНИЦИАЛИЗАЦИЯ БД ============
+async function initDB() {
+  const SQL = await initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}` });
+  db = new SQL.Database();
+
+  // Уровень 1 — простые таблицы
+  db.run("CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER, city TEXT);");
+  db.run("INSERT INTO students (name, age, city) VALUES ('Аня', 19, 'Москва'), ('Борис', 17, 'СПб'), ('Вика', 20, 'Москва'), ('Глеб', 22, 'Казань');");
+  db.run("CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price REAL);");
+  db.run("INSERT INTO products (name, price) VALUES ('Тетрадь', 50), ('Ручка', 20), ('Ластик', 15), ('Рюкзак', 1500);");
+
+  // Уровень 2 — база викторин (точно как в Python-коде)
+  db.run("CREATE TABLE quiz (id INTEGER PRIMARY KEY, name VARCHAR);");
+  db.run("CREATE TABLE question (id INTEGER PRIMARY KEY, question VARCHAR, answer VARCHAR, wrong1 VARCHAR, wrong2 VARCHAR, wrong3 VARCHAR);");
+  db.run("CREATE TABLE quiz_content (id INTEGER PRIMARY KEY, quiz_id INTEGER, question_id INTEGER, FOREIGN KEY(quiz_id) REFERENCES quiz(id), FOREIGN KEY(question_id) REFERENCES question(id));");
+
+  db.run("INSERT INTO question (question, answer, wrong1, wrong2, wrong3) VALUES " +
+    "('Сколько месяцев в году имеют 28 дней?','Все','Один','Ни одного','Два')," +
+    "('Каким станет зелёный утёс, если упадёт в Красное море?','Мокрым','Красным','Не изменится','Фиолетовым')," +
+    "('Какой рукой лучше размешивать чай?','Ложкой','Правой','Левой','Любой')," +
+    "('Что не имеет длины, глубины, ширины, высоты, а можно измерить?','Время','Глупость','Море','Воздух')," +
+    "('Когда сетью можно вытянуть воду?','Когда вода замерзла','Когда нет рыбы','Когда уплыла золотая рыбка','Когда сеть порвалась')," +
+    "('Что больше слона и ничего не весит?','Тень слона','Воздушный шар','Парашют','Облако');");
+
+  db.run("INSERT INTO quiz (name) VALUES ('Своя игра'),('Кто хочет стать миллионером?'),('Самый умный');");
+
+  // Связи: в каждую викторину по 2 вопроса (как если бы пользователь вызвал add_links)
+  db.run("INSERT INTO quiz_content (quiz_id, question_id) VALUES (1,1),(1,2),(2,3),(2,4),(3,5),(3,6);");
+}
+
+// ============ ОТРИСОВКА ============
+function renderTasks() {
+  const container = document.getElementById("tasks");
+  container.innerHTML = "";
+  const list = tasks[currentLevel];
+
+  list.forEach(t => {
+    const div = document.createElement("div");
+    div.className = "task";
+    div.innerHTML = `
+      <h3>${t.title} ${solved[currentLevel].has(t.id) ? '✅' : ''}</h3>
+      <div class="desc">${t.desc}</div>
+      <textarea id="sql-${currentLevel}-${t.id}" placeholder="Введи SQL-запрос..."></textarea>
+      <div class="buttons">
+        <button class="action btn-run" data-id="${t.id}">▶ Выполнить</button>
+        <button class="action btn-hint" data-id="${t.id}">💡 Подсказка</button>
+        <button class="action btn-reset" data-id="${t.id}">🔄 Сброс БД</button>
+      </div>
+      <div class="hint" id="hint-${currentLevel}-${t.id}">💡 ${t.hint}</div>
+      <div class="result info" id="res-${currentLevel}-${t.id}">Здесь появится результат...</div>
+    `;
+    container.appendChild(div);
+  });
+
+  container.querySelectorAll(".btn-run").forEach(b => b.onclick = () => runTask(+b.dataset.id));
+  container.querySelectorAll(".btn-hint").forEach(b => b.onclick = () => {
+    document.getElementById(`hint-${currentLevel}-${b.dataset.id}`).classList.add("show");
+  });
+  container.querySelectorAll(".btn-reset").forEach(b => b.onclick = () => resetDB());
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = tasks[currentLevel].length;
+  const done = solved[currentLevel].size;
+  document.getElementById("progress").textContent = `Уровень ${currentLevel}: ${done} / ${total}`;
+}
+
+// ============ ВЫПОЛНЕНИЕ ============
+async function runTask(id) {
+  const ta = document.getElementById(`sql-${currentLevel}-${id}`);
+  const res = document.getElementById(`res-${currentLevel}-${id}`);
+  const sql = ta.value.trim();
+  if (!sql) {
+    res.className = "result err";
+    res.textContent = "Введи SQL-запрос!";
+    return;
+  }
+
+  try {
+    const results = db.exec(sql);
+    let output = "";
+
+    if (results.length === 0) {
+      output = "Запрос выполнен. Результатов SELECT нет (это INSERT/UPDATE/DELETE/CREATE/DROP).";
+    } else {
+      const last = results[results.length - 1];
+      output = "Результат (" + last.values.length + " строк):\n";
+      output += last.columns.join(" | ") + "\n";
+      output += "-".repeat(50) + "\n";
+      last.values.forEach(row => {
+        output += row.join(" | ") + "\n";
+      });
+    }
+
+    const task = tasks[currentLevel].find(t => t.id === id);
+    const lastResult = results.length ? results[results.length - 1].values.map((row) => {
+      const obj = {};
+      results[results.length - 1].columns.forEach((c, j) => obj[c] = row[j]);
+      return obj;
+    }) : [];
+
+    const ok = task.check(lastResult);
+    if (ok) {
+      res.className = "result ok";
+      res.textContent = "✅ ВЕРНО! " + output;
+      solved[currentLevel].add(id);
+      updateProgress();
+    } else {
+      res.className = "result info";
+      res.textContent = "⚠️ Запрос выполнен, но результат не совпадает с ожидаемым.\n\n" + output;
+    }
+  } catch (e) {
+    res.className = "result err";
+    res.textContent = "❌ Ошибка SQL:\n" + e.message;
+  }
+}
+
+async function resetDB() {
+  await initDB();
+  alert("База данных сброшена до начального состояния.");
+}
+
+// ============ ПЕРЕКЛЮЧЕНИЕ УРОВНЕЙ ============
+document.querySelectorAll(".level-tab").forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll(".level-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    currentLevel = +tab.dataset.level;
+    renderTasks();
+  };
+});
+
+// ============ СТАРТ ============
+(async () => {
+  document.getElementById("progress").textContent = "Загрузка SQLite...";
+  await initDB();
+  renderTasks();
+})();
+</script>
+</body>
+</html>
