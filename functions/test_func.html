@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Функция test() — презентация</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d1a;
+    --bg-soft: #15152a;
+    --text: #c9c9e0;
+    --muted: #8a8aa8;
+    --neon-blue: #7aa2f7;
+    --neon-purple: #bb9af7;
+    --neon-green: #9ece6a;
+    --neon-pink: #f7768e;
+    --neon-yellow: #e0af68;
+    --glow: 0 0 8px rgba(122, 162, 247, 0.35);
+  }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(ellipse at top, #1a1a35 0%, var(--bg) 70%);
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    overflow: hidden;
+  }
+
+  .presentation {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 60px 80px 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    pointer-events: none;
+    overflow: auto;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  h1 {
+    font-size: 2.8em;
+    font-weight: 300;
+    color: var(--neon-blue);
+    text-shadow: var(--glow);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+
+  h2 {
+    font-size: 2em;
+    font-weight: 300;
+    color: var(--neon-purple);
+    text-shadow: 0 0 8px rgba(187, 154, 247, 0.35);
+    margin-bottom: 25px;
+    border-left: 3px solid var(--neon-purple);
+    padding-left: 15px;
+  }
+
+  h3 {
+    font-size: 1.3em;
+    color: var(--neon-green);
+    margin: 15px 0 10px;
+    font-weight: 400;
+  }
+
+  p, li {
+    font-size: 1.15em;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  ul { list-style: none; padding-left: 0; }
+  ul li::before {
+    content: "▸";
+    color: var(--neon-blue);
+    margin-right: 10px;
+    text-shadow: var(--glow);
+  }
+  ul li { margin-bottom: 8px; }
+
+  code, pre {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background: var(--bg-soft);
+    border: 1px solid rgba(122, 162, 247, 0.2);
+    border-radius: 6px;
+  }
+
+  code {
+    padding: 2px 8px;
+    color: var(--neon-pink);
+    font-size: 0.95em;
+  }
+
+  pre {
+    padding: 18px 22px;
+    margin: 15px 0;
+    overflow-x: auto;
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: var(--text);
+    box-shadow: inset 0 0 20px rgba(122, 162, 247, 0.05);
+  }
+
+  .kw { color: var(--neon-purple); }
+  .fn { color: var(--neon-blue); }
+  .str { color: var(--neon-green); }
+  .num { color: var(--neon-yellow); }
+  .com { color: var(--muted); font-style: italic; }
+
+  .subtitle {
+    font-size: 1.4em;
+    color: var(--muted);
+    margin-top: 15px;
+    font-weight: 300;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-top: 20px;
+  }
+
+  .card {
+    background: rgba(21, 21, 42, 0.6);
+    border: 1px solid rgba(122, 162, 247, 0.25);
+    border-radius: 10px;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+
+  .card h3 { margin-top: 0; }
+
+  /* Навигация */
+  .nav {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 100;
+  }
+
+  .nav button {
+    background: transparent;
+    border: 1px solid var(--neon-blue);
+    color: var(--neon-blue);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2em;
+    transition: all 0.3s;
+    box-shadow: var(--glow);
+  }
+  .nav button:hover {
+    background: rgba(122, 162, 247, 0.15);
+    box-shadow: 0 0 14px rgba(122, 162, 247, 0.6);
+  }
+
+  .dots { display: flex; gap: 8px; }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(122, 162, 247, 0.2);
+    border: 1px solid var(--neon-blue);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .dot.active {
+    background: var(--neon-blue);
+    box-shadow: 0 0 10px var(--neon-blue);
+  }
+
+  .counter {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    color: var(--muted);
+    font-size: 0.95em;
+    letter-spacing: 1px;
+  }
+
+  .final {
+    text-align: center;
+  }
+  .final h1 {
+    font-size: 3.5em;
+    background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple), var(--neon-pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 10px rgba(122, 162, 247, 0.4));
+  }
+
+  .scheme-step {
+    display: flex;
+    align-items: flex-start;
+    margin: 12px 0;
+    padding: 12px 18px;
+    background: rgba(21, 21, 42, 0.5);
+    border-left: 2px solid var(--neon-blue);
+    border-radius: 0 6px 6px 0;
+  }
+  .scheme-step .num-step {
+    color: var(--neon-yellow);
+    font-weight: bold;
+    margin-right: 15px;
+    min-width: 30px;
+    font-size: 1.2em;
+  }
+</style>
+</head>
+<body>
+
+<div class="counter" id="counter">1 / 9</div>
+
+<div class="presentation" id="presentation">
+
+  <!-- Слайд 1: Титул -->
+  <section class="slide active">
+    <h1>Функция <code>test()</code></h1>
+    <p class="subtitle">Сердце Flask-викторины</p>
+    <p style="margin-top: 40px; color: var(--muted);">
+      Разбор маршрута <code>/test</code>, обработки ответов<br>
+      и навигации по вопросам
+    </p>
+  </section>
+
+  <!-- Слайд 2: Роль -->
+  <section class="slide">
+    <h2>Что делает функция <code>test()</code>?</h2>
+    <p>Это <strong style="color: var(--neon-blue);">главный контроллер</strong> викторины. Она обрабатывает маршрут <code>/test</code> и отвечает за два действия:</p>
+    <div class="grid">
+      <div class="card">
+        <h3>📋 Отображение вопроса</h3>
+        <p>Достаёт из базы данных следующий вопрос и показывает его пользователю.</p>
+      </div>
+      <div class="card">
+        <h3>✅ Обработку ответа</h3>
+        <p>Принимает ответ пользователя, проверяет его и сохраняет результат в сессию.</p>
+      </div>
+    </div>
+    <p style="margin-top: 20px; color: var(--muted);">
+      Функция реагирует и на <code>GET</code> (просто зашли на страницу), и на <code>POST</code> (отправили ответ).
+    </p>
+  </section>
+
+  <!-- Слайд 3: Проверка викторины -->
+  <section class="slide">
+    <h2>Шаг 1. Проверка: выбрана ли викторина?</h2>
+    <pre><span class="kw">if</span> <span class="kw">not</span> (<span class="str">'quiz'</span> <span class="kw">in</span> session) <span class="kw">or</span> <span class="fn">int</span>(session[<span class="str">'quiz'</span>]) &lt; <span class="num">0</span>:
+    <span class="kw">return</span> <span class="fn">redirect</span>(<span class="fn">url_for</span>(<span class="str">'index'</span>))</pre>
+    <p>Это «защита от дурака». Если пользователь вручную вбил <code>/test</code> в адресную строку:</p>
+    <ul>
+      <li>в сессии нет ключа <code>'quiz'</code>, <strong>ИЛИ</strong></li>
+      <li>значение <code>'quiz'</code> равно <code>-1</code> (устанавливается функцией <code>index()</code>).</li>
+    </ul>
+    <p style="margin-top: 15px;">В обоих случаях — <strong style="color: var(--neon-pink);">редирект</strong> обратно на главную страницу.</p>
+  </section>
+
+  <!-- Слайд 4: Обработка ответа -->
+  <section class="slide">
+    <h2>Шаг 2. Обработка ответа (POST)</h2>
+    <pre><span class="kw">if</span> request.method == <span class="str">'POST'</span>:
+    <span class="fn">save_answers</span>()</pre>
+    <p>Если пользователь нажал «Ответить», браузер отправляет <strong style="color: var(--neon-blue);">POST-запрос</strong>. Тогда вызывается <code>save_answers()</code>, которая:</p>
+    <ul>
+      <li>забирает выбранный ответ из формы;</li>
+      <li>проверяет его на правильность;</li>
+      <li>увеличивает счётчики <code>total</code> и <code>answers</code>;</li>
+      <li>обновляет <code>last_question</code> — ID только что отвеченного вопроса.</li>
+    </ul>
+    <p style="margin-top: 10px; color: var(--muted);">Если это GET-запрос — блок пропускается.</p>
+  </section>
+
+  <!-- Слайд 5: Получение вопроса -->
+  <section class="slide">
+    <h2>Шаг 3. Получение следующего вопроса</h2>
+    <pre>next_question = <span class="fn">get_question_after</span>(
+    session[<span class="str">'last_question'</span>],
+    session[<span class="str">'quiz'</span>]
+)</pre>
+    <p>Теперь нужно достать из базы данных <strong style="color: var(--neon-green);">следующий</strong> вопрос.</p>
+    <p>Функция <code>get_question_after</code> ищет вопрос, ID которого <em>больше</em>, чем <code>session['last_question']</code>, в рамках текущей викторины.</p>
+  </section>
+
+  <!-- Слайд 6: Конец вопросов -->
+  <section class="slide">
+    <h2>Шаг 4. Вопросы закончились?</h2>
+    <pre><span class="kw">if</span> next_question <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> <span class="fn">len</span>(next_question) == <span class="num">0</span>:
+    <span class="kw">return</span> <span class="fn">redirect</span>(<span class="fn">url_for</span>(<span class="str">'result'</span>))</pre>
+    <p>Если база не нашла больше вопросов (вернула <code>None</code> или пустой список) — викторина пройдена.</p>
+    <p style="margin-top: 15px;">Пользователь <strong style="color: var(--neon-pink);">перенаправляется</strong> на страницу результатов (<code>/result</code>), где увидит свой счёт.</p>
+  </section>
+
+  <!-- Слайд 7: Отображение -->
+  <section class="slide">
+    <h2>Шаг 5. Отображение вопроса</h2>
+    <pre><span class="kw">else</span>:
+    <span class="kw">return</span> <span class="fn">question_form</span>(next_question)</pre>
+    <p>Если следующий вопрос успешно получен — вызываем <code>question_form()</code>:</p>
+    <ul>
+      <li>берёт текст вопроса;</li>
+      <li><strong style="color: var(--neon-yellow);">перемешивает</strong> варианты ответов (каждый раз в новом порядке);</li>
+      <li>рендерит HTML-шаблон <code>test.html</code>;</li>
+      <li>отправляет его в браузер пользователя.</li>
+    </ul>
+  </section>
+
+  <!-- Слайд 8: Алгоритм -->
+  <section class="slide">
+    <h2>Краткая схема работы</h2>
+    <div class="scheme-step"><span class="num-step">1</span><span>Зашёл на <code>/test</code>? → Проверь, выбрал ли викторину. Нет → выгони на главную.</span></div>
+    <div class="scheme-step"><span class="num-step">2</span><span>Пришёл ответ (POST)? → Проверь ответ, сохрани результат в сессию.</span></div>
+    <div class="scheme-step"><span class="num-step">3</span><span>Достань следующий вопрос из БД.</span></div>
+    <div class="scheme-step"><span class="num-step">4</span><span>Вопросов больше нет? → Отправь на страницу результатов.</span></div>
+    <div class="scheme-step"><span class="num-step">5</span><span>Вопрос есть? → Покажи его пользователю.</span></div>
+  </section>
+
+  <!-- Слайд 9: Финал -->
+  <section class="slide final">
+    <h1>Спасибо!</h1>
+    <p class="subtitle" style="margin-top: 30px;">Функция <code>test()</code> — это цикл викторины</p>
+    <p style="margin-top: 40px; color: var(--muted);">
+      Используйте стрелки <span style="color: var(--neon-blue);">← →</span> или кнопки внизу для навигации
+    </p>
+  </section>
+
+</div>
+
+<!-- Навигация -->
+<div class="nav">
+  <button id="prev">‹</button>
+  <div class="dots" id="dots"></div>
+  <button id="next">›</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsContainer = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+  let current = 0;
+
+  // Создаём точки
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    dotsContainer.appendChild(dot);
+  });
+
+  function goTo(index) {
+    if (index < 0) index = 0;
+    if (index >= slides.length) index = slides.length - 1;
+    slides[current].classList.remove('active');
+    document.querySelectorAll('.dot')[current].classList.remove('active');
+    current = index;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.dot')[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') goTo(current + 1);
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End') goTo(slides.length - 1);
+  });
+</script>
+
+</body>
+</html>
