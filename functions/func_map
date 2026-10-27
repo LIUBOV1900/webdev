@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Схема связей функций Flask-викторины</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d1a;
+    --bg-soft: #15152a;
+    --text: #c9c9e0;
+    --muted: #8a8aa8;
+    --neon-blue: #7aa2f7;
+    --neon-purple: #bb9af7;
+    --neon-green: #9ece6a;
+    --neon-pink: #f7768e;
+    --neon-yellow: #e0af68;
+    --neon-cyan: #7dcfff;
+    --neon-orange: #ff9e64;
+    --glow: 0 0 8px rgba(122, 162, 247, 0.35);
+  }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(ellipse at top, #1a1a35 0%, var(--bg) 70%);
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    overflow: hidden;
+  }
+
+  .container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 30px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  header h1 {
+    font-size: 1.8em;
+    font-weight: 300;
+    color: var(--neon-blue);
+    text-shadow: var(--glow);
+    letter-spacing: 1px;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 0.95em;
+    margin-top: 5px;
+  }
+
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 20px;
+    min-height: 0;
+  }
+
+  .scheme-wrap {
+    position: relative;
+    background: rgba(21, 21, 42, 0.4);
+    border: 1px solid rgba(122, 162, 247, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Стили узлов */
+  .node rect, .node circle {
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .node:hover rect, .node:hover circle {
+    filter: drop-shadow(0 0 12px currentColor);
+  }
+
+  .node text {
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    fill: var(--text);
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+
+  .node .label-small {
+    font-size: 10px;
+    fill: var(--muted);
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  /* Цвета типов */
+  .route rect { fill: rgba(122, 162, 247, 0.15); stroke: var(--neon-blue); stroke-width: 2; color: var(--neon-blue); }
+  .helper rect { fill: rgba(187, 154, 247, 0.15); stroke: var(--neon-purple); stroke-width: 1.5; color: var(--neon-purple); }
+  .db rect { fill: rgba(158, 206, 106, 0.15); stroke: var(--neon-green); stroke-width: 1.5; color: var(--neon-green); }
+  .storage circle { fill: rgba(224, 175, 104, 0.15); stroke: var(--neon-yellow); stroke-width: 2; color: var(--neon-yellow); }
+  .user circle { fill: rgba(247, 118, 142, 0.15); stroke: var(--neon-pink); stroke-width: 2; color: var(--neon-pink); }
+
+  /* Связи */
+  .link {
+    fill: none;
+    stroke-width: 1.5;
+    transition: all 0.3s ease;
+  }
+  .link.call { stroke: var(--neon-purple); }
+  .link.redirect { stroke: var(--neon-pink); stroke-dasharray: 6 4; }
+  .link.return { stroke: var(--neon-cyan); stroke-width: 2.5; opacity: 0.85; }
+  .link.data { stroke: var(--neon-green); stroke-dasharray: 2 3; }
+
+  .link-label {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 11px;
+    fill: var(--muted);
+    pointer-events: none;
+  }
+
+  .link-label.return-label {
+    fill: var(--neon-cyan);
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  /* Подсветка при выборе */
+  .dimmed { opacity: 0.15 !important; }
+  .highlighted rect, .highlighted circle {
+    filter: drop-shadow(0 0 15px currentColor);
+    stroke-width: 3;
+  }
+  .highlighted.link {
+    stroke-width: 3.5;
+    opacity: 1;
+  }
+
+  /* Легенда и панель управления */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .panel {
+    background: rgba(21, 21, 42, 0.6);
+    border: 1px solid rgba(122, 162, 247, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+  }
+
+  .panel h3 {
+    font-size: 0.95em;
+    color: var(--neon-blue);
+    margin-bottom: 12px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 0.85em;
+    color: var(--text);
+  }
+
+  .legend-swatch {
+    width: 28px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .legend-line {
+    width: 28px;
+    height: 3px;
+    flex-shrink: 0;
+  }
+
+  .swatch-route { background: rgba(122, 162, 247, 0.4); border: 1px solid var(--neon-blue); }
+  .swatch-helper { background: rgba(187, 154, 247, 0.4); border: 1px solid var(--neon-purple); }
+  .swatch-db { background: rgba(158, 206, 106, 0.4); border: 1px solid var(--neon-green); }
+  .swatch-storage { background: rgba(224, 175, 104, 0.4); border: 1px solid var(--neon-yellow); border-radius: 50%; width: 14px; height: 14px; }
+  .swatch-user { background: rgba(247, 118, 142, 0.4); border: 1px solid var(--neon-pink); border-radius: 50%; width: 14px; height: 14px; }
+
+  .line-call { background: var(--neon-purple); }
+  .line-redirect { background: var(--neon-pink); background-image: repeating-linear-gradient(90deg, var(--neon-pink) 0 6px, transparent 6px 10px); }
+  .line-return { background: var(--neon-cyan); height: 3px; }
+  .line-data { background: var(--neon-green); background-image: repeating-linear-gradient(90deg, var(--neon-green) 0 2px, transparent 2px 5px); }
+
+  .filters {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid rgba(122, 162, 247, 0.3);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.3s;
+    text-align: left;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--neon-blue);
+    color: var(--neon-blue);
+  }
+
+  .filter-btn.active {
+    background: rgba(122, 162, 247, 0.15);
+    border-color: var(--neon-blue);
+    color: var(--neon-blue);
+    box-shadow: var(--glow);
+  }
+
+  .info-box {
+    background: rgba(125, 207, 255, 0.08);
+    border-left: 2px solid var(--neon-cyan);
+    padding: 10px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.82em;
+    line-height: 1.5;
+    color: var(--text);
+    min-height: 80px;
+  }
+
+  .info-box strong {
+    color: var(--neon-cyan);
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.95em;
+  }
+
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--neon-yellow);
+    color: var(--neon-yellow);
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.3s;
+    margin-top: 8px;
+  }
+
+  .reset-btn:hover {
+    background: rgba(224, 175, 104, 0.15);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Схема связей функций</h1>
+    <p>Кликните на функцию, чтобы подсветить её связи · Нажмите «Сброс» для возврата</p>
+  </header>
+
+  <div class="main">
+    <div class="scheme-wrap">
+      <svg viewBox="0 0 1000 650" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <!-- Маркеры стрелок -->
+          <marker id="arrow-call" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#bb9af7"/>
+          </marker>
+          <marker id="arrow-redirect" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#f7768e"/>
+          </marker>
+          <marker id="arrow-return" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#7dcfff"/>
+          </marker>
+          <marker id="arrow-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#9ece6a"/>
+          </marker>
+        </defs>
+
+        <!-- ============ СВЯЗИ (рисуем под узлами) ============ -->
+        <g id="links">
+          <!-- User → index (GET /) -->
+          <path class="link data" data-from="user" data-to="index" d="M 135 80 Q 180 120 220 155" marker-end="url(#arrow-data)"/>
+          <text class="link-label" x="150" y="105">GET /</text>
+
+          <!-- User → test (POST /test) -->
+          <path class="link data" data-from="user" data-to="test" d="M 135 80 Q 280 100 440 155" marker-end="url(#arrow-data)"/>
+          <text class="link-label" x="250" y="95">POST /test</text>
+
+          <!-- index → start_quiz -->
+          <path class="link call" data-from="index" data-to="start_quiz" d="M 260 195 L 260 260" marker-end="url(#arrow-call)"/>
+          <text class="link-label" x="270" y="230">call</text>
+
+          <!-- index → quiz_form -->
+          <path class="link call" data-from="index" data-to="quiz_form" d="M 350 195 Q 400 230 450 260" marker-end="url(#arrow-call)"/>
+          <text class="link-label" x="410" y="225">call (GET)</text>
+
+          <!-- index → test (redirect) -->
+          <path class="link redirect" data-from="index" data-to="test" d="M 390 167 L 440 167" marker-end="url(#arrow-redirect)"/>
+          <text class="link-label" x="400" y="160">redirect</text>
+
+          <!-- quiz_form → get_quises -->
+          <path class="link call" data-from="quiz_form" data-to="get_quises" d="M 400 305 Q 370 330 330 360" marker-end="url(#arrow-call)"/>
+          <text class="link-label" x="340" y="340">call</text>
+
+          <!-- quiz_form → index (return HTML) -->
+          <path class="link return" data-from="quiz_form" data-to="index" d="M 450 260 Q 400 230 350 195" marker-end="url(#arrow-return)"/>
+          <text class="link-label return-label" x="380" y="220">return HTML</text>
+
+          <!-- test → save_answers -->
+          <path class="link call" data-from="test" data-to="save_answers" d="M 525 195 L 525 330" marker-end="url(#arrow-call)"/>
+          <text class="link-label" x="535" y="265">call (POST)</text>
+
+          <!-- test → get_question_after -->
+          <path class="link call" data-from="test" data-to="get_question_after" d="M 580 195 Q 660 260 700 330" marker-end="url(#arrow-call)"/>
+          <text class="link-label" x="630" y="250">call</text>
+
+          <!-- test → question_form -->
+          <path class="link call" data-from="test" data-to="question_form" d="M 525 195 L 525 420" marker-end="url(#arrow-call)"/>
+          <text class="link-label" x="535" y="310">call</text>
+
+          <!-- test → result (redirect) -->
+          <path class="link redirect" data-from="test" data-to="result" d="M 610 167 L 720 167" marker-end="url(#arrow-redirect)"/>
+          <text class="link-label" x="650" y="160">redirect</text>
+
+          <!-- test → index (redirect) -->
+          <path class="link redirect" data-from="test" data-to="index" d="M 440 167 L 390 167" marker-end="url(#arrow-redirect)"/>
+          <text class="link-label" x="400" y="180">redirect</text>
+
+          <!-- save_answers → check_answer -->
+          <path class="link call" data-from="save_answers" data-to="check_answer" d="M 610 352 Q 670 380 700 400" marker-end="url(#arrow-call)"/>
+          <text class="link-label" x="650" y="375">call</text>
+
+          <!-- save_answers → Session -->
+          <path class="link data" data-from="save_answers" data-to="session" d="M 525 375 L 510 520" marker-end="url(#arrow-data)"/>
+          <text class="link-label" x="535" y="450">write</text>
+
+          <!-- start_quiz → Session -->
+          <path class="link data" data-from="start_quiz" data-to="session" d="M 260 305 Q 350 450 470 540" marker-end="url(#arrow-data)"/>
+          <text class="link-label" x="320" y="430">init</text>
+
+          <!-- question_form → Session -->
+          <path class="link data" data-from="question_form" data-to="session" d="M 525 465 Q 520 510 510 520" marker-end="url(#arrow-data)"/>
+          <text class="link-label" x="470" y="495">read</text>
+
+          <!-- question_form → test (return HTML) -->
+          <path class="link return" data-from="question_form" data-to="test" d="M 580 420 Q 650 300 580 195" marker-end="url(#arrow-return)"/>
+          <text class="link-label return-label" x="620" y="310">return HTML</text>
+
+          <!-- result → end_quiz -->
+          <path class="link call" data-from="result" data-to="end_quiz" d="M 800 195 L 800 260" marker-end="url(#arrow-call)"/>
+          <text class="link-label" x="810" y="230">call</text>
+
+          <!-- end_quiz → Session -->
+          <path class="link data" data-from="end_quiz" data-to="session" d="M 800 305 Q 700 450 540 540" marker-end="url(#arrow-data)"/>
+          <text class="link-label" x="700" y="430">clear</text>
+
+          <!-- result → User (return HTML) -->
+          <path class="link return" data-from="result" data-to="user" d="M 805 140 Q 805 100 135 80" marker-end="url(#arrow-return)"/>
+          <text class="link-label return-label" x="750" y="100">return HTML</text>
+
+          <!-- index → User (return HTML от quiz_form) -->
+          <path class="link return" data-from="index" data-to="user" d="M 305 140 Q 305 110 135 80" marker-end="url(#arrow-return)"/>
+          <text class="link-label return-label" x="200" y="105">return HTML</text>
+
+          <!-- test → User (return HTML от question_form) -->
+          <path class="link return" data-from="test" data-to="user" d="M 525 140 Q 525 110 135 80" marker-end="url(#arrow-return)"/>
+          <text class="link-label return-label" x="320" y="100">return HTML</text>
+        </g>
+
+        <!-- ============ УЗЛЫ ============ -->
+        <g id="nodes">
+          <!-- User -->
+          <g class="node user" data-id="user" data-info="Пользователь (браузер). Отправляет HTTP-запросы GET/POST и получает HTML-ответы.">
+            <circle cx="100" cy="80" r="35"/>
+            <text x="100" y="78">👤</text>
+            <text class="label-small" x="100" y="125">Пользователь</text>
+          </g>
+
+          <!-- index -->
+          <g class="node route" data-id="index" data-info="index() — маршрут '/'. GET → показывает форму выбора. POST → сохраняет ID викторины и редиректит на /test. Возвращает HTML через quiz_form().">
+            <rect x="220" y="140" width="170" height="55" rx="8"/>
+            <text x="305" y="165">index()</text>
+            <text class="label-small" x="305" y="182">маршрут /</text>
+          </g>
+
+          <!-- test -->
+          <g class="node route" data-id="test" data-info="test() — маршрут '/test'. Главный цикл викторины: обрабатывает ответы, достаёт вопросы, перенаправляет на результат. Возвращает HTML через question_form().">
+            <rect x="440" y="140" width="170" height="55" rx="8"/>
+            <text x="525" y="165">test()</text>
+            <text class="label-small" x="525" y="182">маршрут /test</text>
+          </g>
+
+          <!-- result -->
+          <g class="node route" data-id="result" data-info="result() — маршрут '/result'. Показывает итоги викторины и очищает сессию через end_quiz(). Возвращает HTML напрямую.">
+            <rect x="720" y="140" width="170" height="55" rx="8"/>
+            <text x="805" y="165">result()</text>
+            <text class="label-small" x="805" y="182">маршрут /result</text>
+          </g>
+
+          <!-- start_quiz -->
+          <g class="node helper" data-id="start_quiz" data-info="start_quiz(quiz_id) — инициализирует сессию: quiz, last_question=0, answers=0, total=0.">
+            <rect x="180" y="260" width="160" height="45" rx="6"/>
+            <text x="260" y="282">start_quiz()</text>
+          </g>
+
+          <!-- quiz_form -->
+          <g class="node helper" data-id="quiz_form" data-info="quiz_form() — получает список викторин из БД и рендерит шаблон start.html. Возвращает HTML в index().">
+            <rect x="370" y="260" width="160" height="45" rx="6"/>
+            <text x="450" y="282">quiz_form()</text>
+          </g>
+
+          <!-- save_answers -->
+          <g class="node helper" data-id="save_answers" data-info="save_answers() — читает ответ из формы, проверяет через check_answer(), обновляет счётчики в session.">
+            <rect x="440" y="330" width="170" height="45" rx="6"/>
+            <text x="525" y="352">save_answers()</text>
+          </g>
+
+          <!-- question_form -->
+          <g class="node helper" data-id="question_form" data-info="question_form(question) — перемешивает ответы и рендерит шаблон test.html с вопросом. Возвращает HTML в test().">
+            <rect x="440" y="420" width="170" height="45" rx="6"/>
+            <text x="525" y="442">question_form()</text>
+          </g>
+
+          <!-- end_quiz -->
+          <g class="node helper" data-id="end_quiz" data-info="end_quiz() — очищает сессию через session.clear(). Завершает викторину.">
+            <rect x="720" y="260" width="160" height="45" rx="6"/>
+            <text x="800" y="282">end_quiz()</text>
+          </g>
+
+          <!-- get_quises -->
+          <g class="node db" data-id="get_quises" data-info="get_quises() — функция из db_scripts. Возвращает список всех викторин из БД.">
+            <rect x="250" y="360" width="160" height="40" rx="6"/>
+            <text x="330" y="380">get_quises()</text>
+          </g>
+
+          <!-- get_question_after -->
+          <g class="node db" data-id="get_question_after" data-info="get_question_after(last_id, quiz_id) — возвращает следующий вопрос из БД после указанного ID.">
+            <rect x="650" y="330" width="190" height="40" rx="6"/>
+            <text x="745" y="350">get_question_after()</text>
+          </g>
+
+          <!-- check_answer -->
+          <g class="node db" data-id="check_answer" data-info="check_answer(quest_id, answer) — проверяет, совпадает ли ответ пользователя с правильным для данного вопроса.">
+            <rect x="650" y="400" width="170" height="40" rx="6"/>
+            <text x="735" y="420">check_answer()</text>
+          </g>
+
+          <!-- Session -->
+          <g class="node storage" data-id="session" data-info="Session — хранилище состояния между запросами. Хранит: quiz, last_question, answers, total.">
+            <circle cx="500" cy="560" r="40"/>
+            <text x="500" y="558">💾</text>
+            <text class="label-small" x="500" y="580">Session</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Боковая панель -->
+    <div class="sidebar">
+      <div class="panel">
+        <h3>Легенда</h3>
+        <div class="legend-item"><div class="legend-swatch swatch-user"></div><span>Пользователь</span></div>
+        <div class="legend-item"><div class="legend-swatch swatch-route"></div><span>Маршрут (URL)</span></div>
+        <div class="legend-item"><div class="legend-swatch swatch-helper"></div><span>Вспомогательная</span></div>
+        <div class="legend-item"><div class="legend-swatch swatch-db"></div><span>Функция БД</span></div>
+        <div class="legend-item"><div class="legend-swatch swatch-storage"></div><span>Session</span></div>
+        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(122, 162, 247, 0.15);">
+          <div class="legend-item"><div class="legend-line line-call"></div><span>Вызов функции</span></div>
+          <div class="legend-item"><div class="legend-line line-redirect"></div><span>Redirect</span></div>
+          <div class="legend-item"><div class="legend-line line-return"></div><span>Возврат HTML</span></div>
+          <div class="legend-item"><div class="legend-line line-data"></div><span>Данные / HTTP</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Фильтры</h3>
+        <div class="filters">
+          <button class="filter-btn active" data-filter="all">🔍 Показать всё</button>
+          <button class="filter-btn" data-filter="route">📍 Только маршруты</button>
+          <button class="filter-btn" data-filter="redirect">🔀 Только redirect</button>
+          <button class="filter-btn" data-filter="call">📞 Только вызовы</button>
+          <button class="filter-btn" data-filter="return">↩️ Только возврат HTML</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Информация</h3>
+        <div class="info-box" id="infoBox">
+          <strong>Подсказка</strong>
+          Кликните на любой блок схемы, чтобы увидеть подробную информацию о функции и её связях.
+        </div>
+        <button class="reset-btn" id="resetBtn">↺ Сбросить выбор</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const nodes = document.querySelectorAll('.node');
+  const links = document.querySelectorAll('.link');
+  const infoBox = document.getElementById('infoBox');
+  const resetBtn = document.getElementById('resetBtn');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+
+  // Сброс подсветки
+  function resetHighlight() {
+    nodes.forEach(n => {
+      n.classList.remove('dimmed', 'highlighted');
+    });
+    links.forEach(l => {
+      l.classList.remove('dimmed', 'highlighted');
+    });
+  }
+
+  // Клик по узлу — подсветить его и связанные
+  nodes.forEach(node => {
+    node.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = node.dataset.id;
+      const info = node.dataset.info;
+
+      resetHighlight();
+
+      // Показываем инфо
+      const title = node.querySelector('text').textContent;
+      infoBox.innerHTML = `<strong>${title}</strong>${info}`;
+
+      // Подсвечиваем выбранный узел
+      node.classList.add('highlighted');
+
+      // Находим все связи, связанные с этим узлом (через data-атрибуты)
+      const connectedNodes = new Set();
+      
+      links.forEach(link => {
+        const from = link.dataset.from;
+        const to = link.dataset.to;
+        
+        if (from === id || to === id) {
+          link.classList.add('highlighted');
+          // Запоминаем связанные узлы
+          if (from !== id) connectedNodes.add(from);
+          if (to !== id) connectedNodes.add(to);
+        } else {
+          link.classList.add('dimmed');
+        }
+      });
+
+      // Подсвечиваем связанные узлы, остальные затемняем
+      nodes.forEach(n => {
+        const nId = n.dataset.id;
+        if (nId !== id && !connectedNodes.has(nId)) {
+          n.classList.add('dimmed');
+        } else if (connectedNodes.has(nId)) {
+          n.classList.add('highlighted');
+        }
+      });
+    });
+  });
+
+  // Клик по фону — сброс
+  document.querySelector('.scheme-wrap').addEventListener('click', (e) => {
+    if (e.target.closest('.node')) return;
+    resetHighlight();
+    infoBox.innerHTML = `<strong>Подсказка</strong>Кликните на любой блок схемы, чтобы увидеть подробную информацию о функции и её связях.`;
+  });
+
+  // Кнопка сброса
+  resetBtn.addEventListener('click', () => {
+    resetHighlight();
+    infoBox.innerHTML = `<strong>Подсказка</strong>Кликните на любой блок схемы, чтобы увидеть подробную информацию о функции и её связях.`;
+  });
+
+  // Фильтры
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+
+      resetHighlight();
+
+      if (filter === 'all') return;
+
+      if (filter === 'route') {
+        nodes.forEach(n => {
+          if (!n.classList.contains('route') && !n.classList.contains('user') && !n.classList.contains('storage')) {
+            n.classList.add('dimmed');
+          }
+        });
+      } else if (filter === 'redirect') {
+        links.forEach(l => {
+          if (!l.classList.contains('redirect')) l.classList.add('dimmed');
+        });
+      } else if (filter === 'call') {
+        links.forEach(l => {
+          if (!l.classList.contains('call')) l.classList.add('dimmed');
+        });
+      } else if (filter === 'return') {
+        links.forEach(l => {
+          if (!l.classList.contains('return')) l.classList.add('dimmed');
+        });
+        nodes.forEach(n => {
+          if (!n.classList.contains('route') && !n.classList.contains('helper') && !n.classList.contains('user')) {
+            n.classList.add('dimmed');
+          }
+        });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
