@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Функция test() — презентация</title>
+<title>Функция test() — улучшенная версия</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,6 +16,7 @@
     --neon-green: #9ece6a;
     --neon-pink: #f7768e;
     --neon-yellow: #e0af68;
+    --neon-cyan: #7dcfff;
     --glow: 0 0 8px rgba(122, 162, 247, 0.35);
   }
 
@@ -148,6 +149,110 @@
 
   .card h3 { margin-top: 0; }
 
+  .step-box {
+    background: rgba(21, 21, 42, 0.5);
+    border-left: 3px solid var(--neon-blue);
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .step-box .step-num {
+    display: inline-block;
+    background: var(--neon-blue);
+    color: var(--bg);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-weight: bold;
+    margin-right: 12px;
+    font-size: 0.95em;
+  }
+
+  .step-box strong {
+    color: var(--neon-cyan);
+  }
+
+  .principle-box {
+    background: rgba(187, 154, 247, 0.1);
+    border: 2px solid var(--neon-purple);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+
+  .principle-box h3 {
+    color: var(--neon-purple);
+    margin-top: 0;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    margin: 10px 0;
+    padding: 12px 18px;
+    background: rgba(21, 21, 42, 0.5);
+    border-left: 2px solid var(--neon-blue);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .flow-step .num-step {
+    color: var(--neon-yellow);
+    font-weight: bold;
+    margin-right: 15px;
+    min-width: 30px;
+    font-size: 1.2em;
+  }
+
+  .flow-step .arrow-flow {
+    color: var(--neon-cyan);
+    margin: 0 8px;
+  }
+
+  .benefit-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .benefit-item {
+    background: rgba(158, 206, 106, 0.1);
+    border: 1px solid var(--neon-green);
+    border-radius: 8px;
+    padding: 15px;
+  }
+
+  .benefit-item h4 {
+    color: var(--neon-green);
+    font-size: 1.1em;
+    margin-bottom: 8px;
+  }
+
+  .benefit-item p {
+    font-size: 1em;
+    margin: 0;
+  }
+
+  /* Специальный стиль для слайда с полным кодом */
+  .slide.full-code h2 {
+    margin-bottom: 15px;
+  }
+
+  .slide.full-code pre {
+    font-size: 0.88em;
+    line-height: 1.45;
+    padding: 20px 25px;
+    margin: 10px 0;
+  }
+
+  .slide.full-code p {
+    font-size: 1.05em;
+    margin-top: 10px;
+  }
+
   /* Навигация */
   .nav {
     position: fixed;
@@ -206,144 +311,259 @@
   }
   .final h1 {
     font-size: 3.5em;
-    background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple), var(--neon-pink));
+    background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple), var(--neon-green));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     filter: drop-shadow(0 0 10px rgba(122, 162, 247, 0.4));
   }
-
-  .scheme-step {
-    display: flex;
-    align-items: flex-start;
-    margin: 12px 0;
-    padding: 12px 18px;
-    background: rgba(21, 21, 42, 0.5);
-    border-left: 2px solid var(--neon-blue);
-    border-radius: 0 6px 6px 0;
-  }
-  .scheme-step .num-step {
-    color: var(--neon-yellow);
-    font-weight: bold;
-    margin-right: 15px;
-    min-width: 30px;
-    font-size: 1.2em;
-  }
 </style>
 </head>
 <body>
 
-<div class="counter" id="counter">1 / 9</div>
+<div class="counter" id="counter">1 / 10</div>
 
 <div class="presentation" id="presentation">
 
   <!-- Слайд 1: Титул -->
   <section class="slide active">
-    <h1>Функция <code>test()</code></h1>
-    <p class="subtitle">Сердце Flask-викторины</p>
+    <h1>Функция test()</h1>
+    <p class="subtitle">Логичная структура с принципом «early return»</p>
     <p style="margin-top: 40px; color: var(--muted);">
-      Разбор маршрута <code>/test</code>, обработки ответов<br>
-      и навигации по вопросам
+      Разбор работы функции — главного контроллера викторины,<br>
+      построенной как линейный алгоритм из 5 шагов
     </p>
   </section>
 
-  <!-- Слайд 2: Роль -->
+  <!-- Слайд 2: Полный код -->
+  <section class="slide full-code">
+    <h2>Полный код функции</h2>
+    <pre><span class="kw">def</span> <span class="fn">test</span>():
+    <span class="str">'''возвращает страницу вопроса'''</span>
+    
+    <span class="com"># 1. Защита: если викторина не выбрана — на главную</span>
+    <span class="kw">if</span> <span class="str">'quiz'</span> <span class="kw">not in</span> session <span class="kw">or</span> <span class="fn">int</span>(session[<span class="str">'quiz'</span>]) &lt; <span class="num">0</span>:
+        <span class="kw">return</span> <span class="fn">redirect</span>(<span class="fn">url_for</span>(<span class="str">'index'</span>))
+    
+    <span class="com"># 2. Если пришёл ответ — сохраняем его</span>
+    <span class="kw">if</span> request.method == <span class="str">'POST'</span>:
+        <span class="fn">save_answers</span>()
+    
+    <span class="com"># 3. Достаём следующий вопрос</span>
+    next_question = <span class="fn">get_question_after</span>(session[<span class="str">'last_question'</span>], session[<span class="str">'quiz'</span>])
+    
+    <span class="com"># 4. Если вопросы кончились — на страницу результатов</span>
+    <span class="kw">if not</span> next_question:
+        <span class="kw">return</span> <span class="fn">redirect</span>(<span class="fn">url_for</span>(<span class="str">'result'</span>))
+    
+    <span class="com"># 5. Иначе — показываем вопрос</span>
+    <span class="kw">return</span> <span class="fn">question_form</span>(next_question)</pre>
+    <p style="color: var(--neon-cyan); text-align: center;">
+      5 пронумерованных шагов — каждый выполняет одну задачу
+    </p>
+  </section>
+
+  <!-- Слайд 3: Принцип early return -->
   <section class="slide">
-    <h2>Что делает функция <code>test()</code>?</h2>
-    <p>Это <strong style="color: var(--neon-blue);">главный контроллер</strong> викторины. Она обрабатывает маршрут <code>/test</code> и отвечает за два действия:</p>
-    <div class="grid">
-      <div class="card">
-        <h3>📋 Отображение вопроса</h3>
-        <p>Достаёт из базы данных следующий вопрос и показывает его пользователю.</p>
-      </div>
-      <div class="card">
-        <h3>✅ Обработку ответа</h3>
-        <p>Принимает ответ пользователя, проверяет его и сохраняет результат в сессию.</p>
-      </div>
+    <h2>Принцип «early return»</h2>
+    <div class="principle-box">
+      <h3>💡 Ключевая идея</h3>
+      <p>Сначала обрабатываем <strong style="color: var(--neon-pink);">исключительные ситуации</strong> и выходим из функции,<br>
+      затем пишем <strong style="color: var(--neon-green);">основной сценарий</strong> как плоский линейный код.</p>
     </div>
+    <h3>Как это работает в test():</h3>
+    <ul>
+      <li><strong style="color: var(--neon-pink);">Шаг 1</strong> — ранний выход, если нет викторины</li>
+      <li><strong style="color: var(--neon-yellow);">Шаг 4</strong> — ранний выход, если вопросы кончились</li>
+      <li><strong style="color: var(--neon-green);">Шаг 5</strong> — единственный «нормальный» возврат с HTML</li>
+    </ul>
     <p style="margin-top: 20px; color: var(--muted);">
-      Функция реагирует и на <code>GET</code> (просто зашли на страницу), и на <code>POST</code> (отправили ответ).
+      Благодаря этому основной код не находится внутри вложенных <code>if/else</code> — он читается сверху вниз как последовательность действий.
     </p>
   </section>
 
-  <!-- Слайд 3: Проверка викторины -->
+  <!-- Слайд 4: Шаг 1 -->
   <section class="slide">
-    <h2>Шаг 1. Проверка: выбрана ли викторина?</h2>
-    <pre><span class="kw">if</span> <span class="kw">not</span> (<span class="str">'quiz'</span> <span class="kw">in</span> session) <span class="kw">or</span> <span class="fn">int</span>(session[<span class="str">'quiz'</span>]) &lt; <span class="num">0</span>:
+    <h2>Шаг 1. Защита от некорректного входа</h2>
+    <div class="step-box">
+      <span class="step-num">1</span>
+      <span><strong>Проверка:</strong> выбрал ли пользователь викторину?</span>
+    </div>
+    <pre><span class="kw">if</span> <span class="str">'quiz'</span> <span class="kw">not in</span> session <span class="kw">or</span> <span class="fn">int</span>(session[<span class="str">'quiz'</span>]) &lt; <span class="num">0</span>:
     <span class="kw">return</span> <span class="fn">redirect</span>(<span class="fn">url_for</span>(<span class="str">'index'</span>))</pre>
-    <p>Это «защита от дурака». Если пользователь вручную вбил <code>/test</code> в адресную строку:</p>
+    <h3>Что проверяется:</h3>
     <ul>
-      <li>в сессии нет ключа <code>'quiz'</code>, <strong>ИЛИ</strong></li>
-      <li>значение <code>'quiz'</code> равно <code>-1</code> (устанавливается функцией <code>index()</code>).</li>
+      <li>Есть ли ключ <code>'quiz'</code> в сессии?</li>
+      <li>Значение <code>>= 0</code>? (отрицательное означает «не выбрана»)</li>
     </ul>
-    <p style="margin-top: 15px;">В обоих случаях — <strong style="color: var(--neon-pink);">редирект</strong> обратно на главную страницу.</p>
+    <h3>Результат:</h3>
+    <p>Если условие истинно — <strong style="color: var(--neon-pink);">ранний возврат</strong>: пользователь перенаправляется на главную страницу, где может выбрать викторину. Функция завершается.</p>
   </section>
 
-  <!-- Слайд 4: Обработка ответа -->
+  <!-- Слайд 5: Шаг 2 -->
   <section class="slide">
-    <h2>Шаг 2. Обработка ответа (POST)</h2>
+    <h2>Шаг 2. Обработка ответа пользователя</h2>
+    <div class="step-box">
+      <span class="step-num">2</span>
+      <span><strong>Проверка:</strong> пришёл ли ответ (POST-запрос)?</span>
+    </div>
     <pre><span class="kw">if</span> request.method == <span class="str">'POST'</span>:
     <span class="fn">save_answers</span>()</pre>
-    <p>Если пользователь нажал «Ответить», браузер отправляет <strong style="color: var(--neon-blue);">POST-запрос</strong>. Тогда вызывается <code>save_answers()</code>, которая:</p>
+    <h3>Логика:</h3>
     <ul>
-      <li>забирает выбранный ответ из формы;</li>
-      <li>проверяет его на правильность;</li>
-      <li>увеличивает счётчики <code>total</code> и <code>answers</code>;</li>
-      <li>обновляет <code>last_question</code> — ID только что отвеченного вопроса.</li>
+      <li><strong>POST</strong> → пользователь нажал «Ответить» → вызываем <code>save_answers()</code></li>
+      <li><strong>GET</strong> → просто зашёл на страницу → пропускаем этот блок</li>
     </ul>
-    <p style="margin-top: 10px; color: var(--muted);">Если это GET-запрос — блок пропускается.</p>
+    <div class="principle-box" style="margin-top: 20px;">
+      <h3>💡 Особенность</h3>
+      <p>Здесь <strong>нет else</strong> и <strong>нет return</strong>. После обработки POST поток просто продолжается дальше — к получению следующего вопроса. Это делает код плоским.</p>
+    </div>
   </section>
 
-  <!-- Слайд 5: Получение вопроса -->
+  <!-- Слайд 6: Шаг 3 -->
   <section class="slide">
     <h2>Шаг 3. Получение следующего вопроса</h2>
+    <div class="step-box">
+      <span class="step-num">3</span>
+      <span><strong>Основной шаг:</strong> достаём вопрос из базы данных</span>
+    </div>
     <pre>next_question = <span class="fn">get_question_after</span>(
-    session[<span class="str">'last_question'</span>],
+    session[<span class="str">'last_question'</span>], 
     session[<span class="str">'quiz'</span>]
 )</pre>
-    <p>Теперь нужно достать из базы данных <strong style="color: var(--neon-green);">следующий</strong> вопрос.</p>
-    <p>Функция <code>get_question_after</code> ищет вопрос, ID которого <em>больше</em>, чем <code>session['last_question']</code>, в рамках текущей викторины.</p>
-  </section>
-
-  <!-- Слайд 6: Конец вопросов -->
-  <section class="slide">
-    <h2>Шаг 4. Вопросы закончились?</h2>
-    <pre><span class="kw">if</span> next_question <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> <span class="fn">len</span>(next_question) == <span class="num">0</span>:
-    <span class="kw">return</span> <span class="fn">redirect</span>(<span class="fn">url_for</span>(<span class="str">'result'</span>))</pre>
-    <p>Если база не нашла больше вопросов (вернула <code>None</code> или пустой список) — викторина пройдена.</p>
-    <p style="margin-top: 15px;">Пользователь <strong style="color: var(--neon-pink);">перенаправляется</strong> на страницу результатов (<code>/result</code>), где увидит свой счёт.</p>
-  </section>
-
-  <!-- Слайд 7: Отображение -->
-  <section class="slide">
-    <h2>Шаг 5. Отображение вопроса</h2>
-    <pre><span class="kw">else</span>:
-    <span class="kw">return</span> <span class="fn">question_form</span>(next_question)</pre>
-    <p>Если следующий вопрос успешно получен — вызываем <code>question_form()</code>:</p>
+    <h3>Что делает функция:</h3>
     <ul>
-      <li>берёт текст вопроса;</li>
-      <li><strong style="color: var(--neon-yellow);">перемешивает</strong> варианты ответов (каждый раз в новом порядке);</li>
-      <li>рендерит HTML-шаблон <code>test.html</code>;</li>
-      <li>отправляет его в браузер пользователя.</li>
+      <li>Берёт ID последнего отвеченного вопроса из <code>session['last_question']</code></li>
+      <li>Ищет в БД вопрос с ID <strong>больше</strong> этого значения</li>
+      <li>Фильтрует по текущей викторине <code>session['quiz']</code></li>
     </ul>
+    <h3>Результат:</h3>
+    <p>Переменная <code>next_question</code> содержит кортеж с данными вопроса или <code>None</code>/пустой список, если вопросов больше нет.</p>
   </section>
 
-  <!-- Слайд 8: Алгоритм -->
+  <!-- Слайд 7: Шаг 4 -->
   <section class="slide">
-    <h2>Краткая схема работы</h2>
-    <div class="scheme-step"><span class="num-step">1</span><span>Зашёл на <code>/test</code>? → Проверь, выбрал ли викторину. Нет → выгони на главную.</span></div>
-    <div class="scheme-step"><span class="num-step">2</span><span>Пришёл ответ (POST)? → Проверь ответ, сохрани результат в сессию.</span></div>
-    <div class="scheme-step"><span class="num-step">3</span><span>Достань следующий вопрос из БД.</span></div>
-    <div class="scheme-step"><span class="num-step">4</span><span>Вопросов больше нет? → Отправь на страницу результатов.</span></div>
-    <div class="scheme-step"><span class="num-step">5</span><span>Вопрос есть? → Покажи его пользователю.</span></div>
+    <h2>Шаг 4. Проверка окончания викторины</h2>
+    <div class="step-box">
+      <span class="step-num">4</span>
+      <span><strong>Проверка:</strong> есть ли ещё вопросы?</span>
+    </div>
+    <pre><span class="kw">if not</span> next_question:
+    <span class="kw">return</span> <span class="fn">redirect</span>(<span class="fn">url_for</span>(<span class="str">'result'</span>))</pre>
+    <h3>Условие <code>not next_question</code>:</h3>
+    <ul>
+      <li>Истинно, если значение <code>None</code></li>
+      <li>Истинно, если список пустой</li>
+      <li>Истинно для любого «ложного» объекта</li>
+    </ul>
+    <h3>Результат:</h3>
+    <p>Если вопросов больше нет — <strong style="color: var(--neon-pink);">ранний возврат</strong>: пользователь перенаправляется на страницу результатов. Функция завершается.</p>
   </section>
 
-  <!-- Слайд 9: Финал -->
+  <!-- Слайд 8: Шаг 5 -->
+  <section class="slide">
+    <h2>Шаг 5. Возврат страницы вопроса</h2>
+    <div class="step-box">
+      <span class="step-num">5</span>
+      <span><strong>Основной возврат:</strong> показываем вопрос пользователю</span>
+    </div>
+    <pre><span class="kw">return</span> <span class="fn">question_form</span>(next_question)</pre>
+    <h3>Что делает question_form():</h3>
+    <ul>
+      <li>Берёт текст вопроса из кортежа</li>
+      <li>Собирает варианты ответов</li>
+      <li><strong style="color: var(--neon-yellow);">Перемешивает</strong> их через <code>shuffle()</code></li>
+      <li>Рендерит шаблон <code>test.html</code></li>
+      <li>Возвращает HTML в браузер</li>
+    </ul>
+    <div class="principle-box" style="margin-top: 20px;">
+      <h3>💡 Единственный «нормальный» выход</h3>
+      <p>Это единственный случай, когда функция возвращает HTML. Все остальные выходы — это <code>redirect</code> на другие страницы.</p>
+    </div>
+  </section>
+
+  <!-- Слайд 9: Поток выполнения -->
+  <section class="slide">
+    <h2>Поток выполнения</h2>
+    <p style="margin-bottom: 20px;">Функция имеет <strong style="color: var(--neon-cyan);">3 возможных выхода</strong> и <strong style="color: var(--neon-green);">1 основной путь</strong>:</p>
+    
+    <div class="flow-step">
+      <span class="num-step">→</span>
+      <span>Пользователь заходит на <code>/test</code> (GET или POST)</span>
+    </div>
+    <div class="flow-step">
+      <span class="num-step">1</span>
+      <span>Нет викторины в session? <span class="arrow-flow">→</span> <strong style="color: var(--neon-pink);">redirect на /</strong></span>
+    </div>
+    <div class="flow-step">
+      <span class="num-step">2</span>
+      <span>POST-запрос? <span class="arrow-flow">→</span> <code>save_answers()</code> <span class="arrow-flow">→</span> продолжаем</span>
+    </div>
+    <div class="flow-step">
+      <span class="num-step">3</span>
+      <span>Получаем следующий вопрос из БД</span>
+    </div>
+    <div class="flow-step">
+      <span class="num-step">4</span>
+      <span>Вопросов нет? <span class="arrow-flow">→</span> <strong style="color: var(--neon-pink);">redirect на /result</strong></span>
+    </div>
+    <div class="flow-step">
+      <span class="num-step">5</span>
+      <span>Вопрос есть <span class="arrow-flow">→</span> <strong style="color: var(--neon-green);">return HTML</strong> с вопросом</span>
+    </div>
+
+    <p style="margin-top: 25px; color: var(--neon-cyan); text-align: center;">
+      Все шаги идут последовательно — код читается как линейный алгоритм
+    </p>
+  </section>
+
+  <!-- Слайд 10: Преимущества -->
+  <section class="slide">
+    <h2>Преимущества такой структуры</h2>
+    <div class="benefit-list">
+      <div class="benefit-item">
+        <h4>📖 Читаемость</h4>
+        <p>Код читается как последовательность шагов. Каждый блок — одна логическая единица.</p>
+      </div>
+      <div class="benefit-item">
+        <h4>🎯 Плоская структура</h4>
+        <p>Максимум 1 уровень вложенности. Не нужно следить за отступами и скобками.</p>
+      </div>
+      <div class="benefit-item">
+        <h4>🔧 Простота отладки</h4>
+        <p>Легко поставить breakpoint на любом шаге. Поток выполнения предсказуем.</p>
+      </div>
+      <div class="benefit-item">
+        <h4>🐍 Pythonic</h4>
+        <p>Использует идиомы Python: <code>not in</code>, <code>not next_question</code>, early return.</p>
+      </div>
+      <div class="benefit-item">
+        <h4>🛡️ Защита</h4>
+        <p>Исключительные ситуации обрабатываются первыми — основной код защищён от ошибок.</p>
+      </div>
+      <div class="benefit-item">
+        <h4>📝 Документирование</h4>
+        <p>Нумерованные шаги позволяют легко комментировать и документировать код.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Слайд 11: Финал -->
   <section class="slide final">
-    <h1>Спасибо!</h1>
-    <p class="subtitle" style="margin-top: 30px;">Функция <code>test()</code> — это цикл викторины</p>
-    <p style="margin-top: 40px; color: var(--muted);">
-      Используйте стрелки <span style="color: var(--neon-blue);">← →</span> или кнопки внизу для навигации
+    <h1>Итог</h1>
+    <p class="subtitle" style="margin-top: 30px;">
+      Функция <code>test()</code> построена как<br>
+      <strong style="color: var(--neon-green);">линейный алгоритм</strong> из 5 шагов
+    </p>
+    <div style="margin-top: 50px; text-align: left; max-width: 650px; margin-left: auto; margin-right: auto;">
+      <h3 style="color: var(--neon-cyan);">Главный принцип:</h3>
+      <p style="font-size: 1.3em; line-height: 1.8;">
+        Сначала обрабатываем <strong style="color: var(--neon-pink);">исключения</strong> и выходим,<br>
+        потом пишем <strong style="color: var(--neon-green);">основной сценарий</strong> без вложенности.
+      </p>
+    </div>
+    <p style="margin-top: 50px; color: var(--muted);">
+      Используйте стрелки <span style="color: var(--neon-blue);">← →</span> для навигации
     </p>
   </section>
 
